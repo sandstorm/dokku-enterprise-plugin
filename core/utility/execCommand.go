@@ -15,7 +15,7 @@ func ExecCommand(commandParts ...string) (string) {
 	output, err := cmd.CombinedOutput()
 
 	if (err != nil) {
-		return ""
+		return "ERROR running command: " + strings.Join(commandParts, " ") + " - " + strings.TrimSpace(string(output[:]))
 	} else {
 		return strings.TrimSpace(string(output[:]))
 	}

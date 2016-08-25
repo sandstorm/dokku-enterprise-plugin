@@ -20,6 +20,7 @@ Implementation note: This is realized using the `nginx-pre-reload` hook.
 
 ## Developing
 
+go get github.com/DATA-DOG/godog/cmd/godog
 
 ./build.sh
 vagrant up
