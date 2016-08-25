@@ -22,3 +22,8 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+.vagrant
+
+bin-build/*
+!bin-build/plugin.toml
