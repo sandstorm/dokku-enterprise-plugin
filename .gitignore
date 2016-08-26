@@ -27,3 +27,6 @@ _testmain.go
 
 bin-build/*
 !bin-build/plugin.toml
+!bin-build/config.json
+
+vendor

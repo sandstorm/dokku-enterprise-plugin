@@ -1,0 +1,12 @@
+hash: de7922f32575c555ce97929b5f34a2d16392df424f197abbbaf77c6d28576709
+updated: 2016-08-25T16:38:09.029108594+02:00
+imports:
+- name: github.com/kardianos/osext
+  version: c2c54e542fb797ad986b31721e1baedf214ca413
+- name: github.com/satori/go.uuid
+  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+testImports:
+- name: github.com/DATA-DOG/godog
+  version: 6e3b3f764a57d37691c0dfd007e7e586d3e452dc
+  subpackages:
+  - gherkin

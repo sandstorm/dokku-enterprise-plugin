@@ -1,0 +1,8 @@
+package: github.com/sandstorm/dokku-enterprise-plugin
+import:
+- package: github.com/satori/go.uuid
+- package: github.com/kardianos/osext
+testImport:
+- package: github.com/DATA-DOG/godog
+  subpackages:
+  - gherkin

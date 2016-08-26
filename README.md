@@ -22,6 +22,9 @@ Implementation note: This is realized using the `nginx-pre-reload` hook.
 
 go get github.com/DATA-DOG/godog/cmd/godog
 
+brew install glide
+glide install
+
 ./build.sh
 vagrant up
 go to http://dokku.me - and press "save" once.

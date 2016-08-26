@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 	"os"
 	"io/ioutil"
@@ -93,14 +92,4 @@ func theResponseShouldNotContain(substring string) error {
 		return fmt.Errorf("String '%s' should not contain '%s', but did.", body, substring)
 	}
 	return nil;
-}
-
-func FeatureContext(s *godog.Suite) {
-	s.Step(`^I remove the file "([^"]*)"$`, iRemoveTheFile)
-	s.Step(`^I have an empty node\.js application$`, iHaveAnEmptyNodejsApplication)
-	s.Step(`^I create the file "([^"]*)" with the following contents:$`, iCreateTheFileWithTheFollowingContents)
-	s.Step(`^I deploy the application as "([^"]*)"$`, iDeployTheApplicationAs)
-	s.Step(`^I call the URL "([^"]*)" of the "([^"]*)" application$`, iCallTheURLOfTheApplication)
-	s.Step(`^the response should contain "([^"]*)"$`, theResponseShouldContain)
-	s.Step(`^the response should not contain "([^"]*)"$`, theResponseShouldNotContain)
 }
