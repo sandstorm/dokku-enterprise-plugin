@@ -4,8 +4,8 @@ before_install:
 - ls
 - pwd
 - go get -v github.com/Masterminds/glide
-- glide install
 
+install: glide install
 script:
 - ls
 
