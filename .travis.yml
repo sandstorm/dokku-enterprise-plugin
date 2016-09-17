@@ -3,6 +3,8 @@ language: go
 before_install:
 - ls
 - pwd
+- go get -v github.com/Masterminds/glide
+- glide install
 
 script:
 - ls
