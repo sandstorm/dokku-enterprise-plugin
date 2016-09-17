@@ -7,7 +7,7 @@ before_install:
 
 install: glide install
 script:
-- ls
+- ./build.sh
 
 sudo: required
 services:
