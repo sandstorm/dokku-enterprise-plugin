@@ -4,7 +4,7 @@ Feature: additional nginx configuration should be taken from /app/nginx.conf.d
   we want to be able to place it inside the git repository
 
   Scenario: Application with custom nginx.conf.d
-    Given I have an empty node.js application
+    Given I have an empty Dockerfile application
     When I create the file "nginx.conf.d/test.conf" with the following contents:
       """
         location /custom-config {

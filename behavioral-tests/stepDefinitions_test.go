@@ -13,22 +13,47 @@ import (
 	"fmt"
 )
 
-func iHaveAnEmptyNodejsApplication() error {
+func iHaveAnEmptyDockerfileApplication() error {
 	os.RemoveAll("/tmp/bdd-test-app")
 	os.Mkdir("/tmp/bdd-test-app", 0755)
 	os.Chdir("/tmp/bdd-test-app")
 
-	packageJsonContents := `{
-		"dependencies": {
-			"nano-server": "*"
-		},
-		"scripts": {
-			"start": "nano-server"
-		}
-	}`;
-	ioutil.WriteFile("package.json", []byte(packageJsonContents), 0644)
-	checksContents := "/ Listing";
+	dockerfileContents := `
+		FROM nginx:stable-alpine
+		ADD . /app
+		EXPOSE 5000
+		RUN cp /app/nginx.conf /etc/nginx/nginx.conf
+		CMD ["nginx", "-g", "daemon off;"]
+	`;
+	ioutil.WriteFile("Dockerfile", []byte(dockerfileContents), 0644)
+
+	checksContents := `
+		WAIT=1
+		http://test/ welcome
+	`;
 	ioutil.WriteFile("CHECKS", []byte(checksContents), 0644)
+
+	nginxConf := `
+		events {
+			worker_connections  1024;
+		}
+		http {
+			server {
+				listen 5000;
+				listen 80;
+				listen 443;
+				location / {
+					root   /app;
+					index  index.html index.htm;
+				}
+			}
+		}
+	`;
+	ioutil.WriteFile("nginx.conf", []byte(nginxConf), 0644)
+
+	index := "welcome";
+	ioutil.WriteFile("index.html", []byte(index), 0644)
+
 	return nil
 }
 
@@ -38,7 +63,6 @@ func iCreateTheFileWithTheFollowingContents(filePath string, contents *gherkin.D
 
 	return nil
 }
-
 
 func iRemoveTheFile(filePath string) error {
 	os.Remove(filePath)

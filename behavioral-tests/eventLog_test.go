@@ -2,15 +2,22 @@ package main
 
 import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
-	"github.com/DATA-DOG/godog"
+	"strconv"
+	"fmt"
 )
 
 func theEventLogIsEmpty() error {
-	utility.ExecCommand("ssh", "dokku@dokku.me", "rm", "-Rf", "/home/dokku/.event-log-tmp/")
+	utility.ExecCommand("ssh", "root@dokku.me", "rm", "-Rf", "/home/dokku/.event-log-tmp/")
 	return nil
 }
 
-func iExpectEventLogEntry(amount int) error {
-	utility.ExecCommand("ssh", "dokku@dokku.me", "ls", "/home/dokku/.event-log-tmp/")
-	return godog.ErrPending
+func iExpectEventLogEntry(expectedNumberOfLines int) error {
+	result := utility.ExecCommand("ssh", "root@dokku.me", "ls /home/dokku/.event-log-tmp/ | wc -l")
+	numberOfLines, _ := strconv.Atoi(result)
+
+	if (numberOfLines != expectedNumberOfLines) {
+		return fmt.Errorf("Expected %d number of log entries, got %d", expectedNumberOfLines, numberOfLines)
+	}
+
+	return nil
 }
