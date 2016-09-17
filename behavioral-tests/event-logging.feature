@@ -11,6 +11,12 @@ Feature: event logging
     When I deploy the application as "test"
     Then I expect 1 event log entry on disk
 
+    # when the API server is online, but does not respond with a 2xx status code, the event stays cached
+    When the API delivery http server is available at port 23232 for at most 10 seconds and 1 request
+    And the API delivery http server always responds with status code 503
+    And I call dokku "collectMetrics"
+    Then I expect 1 event log entries on disk
+
     # when the API is back online, the event gets delivered
     When the API delivery http server is available at port 23232 for at most 10 seconds and 1 request
     And I call dokku "collectMetrics"

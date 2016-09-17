@@ -16,6 +16,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^the configuration is:$`, theConfigurationIs)
 
 	s.Step(`^the API delivery http server is available at port (\d+) for at most (\d+) seconds and (\d+) request$`, theAPIDeliveryHttpServerIsAvailableAt)
+	s.Step(`^the API delivery http server always responds with status code (\d+)$`, theAPIDeliveryHttpServerAlwaysRespondsWithStatusCode)
 	s.Step(`^I call dokku "([^"]*)"$`, iCallDokku)
 	s.Step(`^the API delivery http server received request (\d+) with the following JSON at "([^"]*)":$`, theAPIDeliveryHttpServerReceivedTheFollowingJSONAtEvent)
 }

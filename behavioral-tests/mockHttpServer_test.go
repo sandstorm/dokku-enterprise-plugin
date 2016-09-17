@@ -21,9 +21,18 @@ func theAPIDeliveryHttpServerIsDisabled() error {
 	return nil
 }
 
-var httpServerWaitGroup sync.WaitGroup
+var httpServerWaitGroup *sync.WaitGroup
+var httpStatusCode int
 
 func theAPIDeliveryHttpServerIsAvailableAt(port int, timeout int, numberOfRequests int) error {
+	if (httpServerWaitGroup != nil) {
+		httpServerWaitGroup.Wait()
+	}
+
+	httpServerWaitGroup = new(sync.WaitGroup)
+
+	httpStatusCode = 200
+
 	originalListener, err := net.Listen("tcp", ":" + strconv.Itoa(port))
 	if err != nil {
 		panic(err)
@@ -34,8 +43,9 @@ func theAPIDeliveryHttpServerIsAvailableAt(port int, timeout int, numberOfReques
 		panic(err)
 	}
 
-	http.HandleFunc("/", _httpHandlerFactory(sl, numberOfRequests))
-	server := http.Server{}
+	serveMux := http.NewServeMux()
+	serveMux.HandleFunc("/", _httpHandlerFactory(sl, numberOfRequests))
+	server := http.Server{Handler: serveMux}
 
 	httpServerWaitGroup.Add(1)
 	go func() {
@@ -53,6 +63,11 @@ func theAPIDeliveryHttpServerIsAvailableAt(port int, timeout int, numberOfReques
 	//wg.Wait()
 	//fmt.Printf("Waiting done\n")
 
+	return nil
+}
+
+func theAPIDeliveryHttpServerAlwaysRespondsWithStatusCode(statusCode int) error {
+	httpStatusCode = statusCode
 	return nil
 }
 
@@ -78,7 +93,6 @@ func _httpHandlerFactory(stoppableListener *httpServerStoppableListener.Stoppabl
 	var numberOfRequestsSoFar = 0
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("newRequest\n")
 		numberOfRequestsSoFar++
 		requestBodyBytes, _ := ioutil.ReadAll(r.Body)
 
@@ -89,6 +103,8 @@ func _httpHandlerFactory(stoppableListener *httpServerStoppableListener.Stoppabl
 		if (maxNumberOfRequests >= numberOfRequestsSoFar) {
 			stoppableListener.Stop()
 		}
+
+		w.WriteHeader(httpStatusCode)
 		fmt.Fprintf(w, "OK")
 	}
 

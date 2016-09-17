@@ -40,10 +40,9 @@ func TryToSendToServer() {
 		for _, file := range files {
 			if (!file.IsDir()) {
 				fileContents, _ := ioutil.ReadFile("/home/dokku/.event-log-tmp/" + file.Name())
-				_, err := http.Post(configuration.Get().ApiEndpointUrl + "/log", "application/json", bytes.NewReader(fileContents))
-				//resp.StatusCode
+				response, err := http.Post(configuration.Get().ApiEndpointUrl + "/log", "application/json", bytes.NewReader(fileContents))
 
-				if (err == nil) {
+				if (err == nil && response.StatusCode <= 300) {
 					os.Remove("/home/dokku/.event-log-tmp/" + file.Name())
 				}
 			}
