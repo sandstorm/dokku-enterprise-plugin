@@ -10,6 +10,7 @@ import (
 type StoppableListener struct {
 	*net.TCPListener          //Wrapped listener
 	stop             chan int //Channel used only to indicate listener should shutdown
+	isStopChanClosed bool
 }
 
 func New(l net.Listener) (*StoppableListener, error) {
@@ -59,5 +60,9 @@ func (sl *StoppableListener) Accept() (net.Conn, error) {
 }
 
 func (sl *StoppableListener) Stop() {
-	close(sl.stop)
+	if (!sl.isStopChanClosed) {
+		close(sl.stop)
+	}
+
+	sl.isStopChanClosed = true
 }
