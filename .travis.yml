@@ -1,0 +1,12 @@
+language: go
+
+before_install:
+- ls
+- pwd
+
+script:
+- ls
+
+sudo: required
+services:
+  - docker
