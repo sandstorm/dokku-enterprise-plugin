@@ -13,6 +13,8 @@ import (
 	"fmt"
 )
 
+// Create a quite-minimal dokku Dockerfile application (as basis for testing)
+// which just delivers a static file.
 func iHaveAnEmptyDockerfileApplication() error {
 	os.RemoveAll("/tmp/bdd-test-app")
 	os.Mkdir("/tmp/bdd-test-app", 0755)
@@ -82,15 +84,30 @@ func iDeployTheApplicationAs(applicationName string) error {
 	}
 }
 
-var body string;
+// Call dokku with some arguments
+func iCallDokku(dokkuArguments string) error {
+	args := strings.Split(dokkuArguments, " ")
 
+	utility.ExecCommand(append([]string{"ssh", "dokku@dokku.me"}, args...)...)
+
+	return nil
+}
+
+// the HTTP response body as string; filled as result of iCallTheURLOfTheApplication()
+var httpResponseBodyAfterCallingApplicationUrl string;
+
+// Call the URL of an application.
 func iCallTheURLOfTheApplication(urlPath, applicationName string) error {
+
+	// First, we need to figure out the port the application is running on; and we need to prefix "dokku.me"
+	// for the host to work properly across Vagrant development environments.
 	domainName := utility.ExecCommand("ssh", "dokku@dokku.me", "urls", applicationName);
 	parsedUrl, _ := url.Parse(domainName)
 	splitHost := strings.Split(parsedUrl.Host, ":")
 	parsedUrl.Host = "dokku.me:" + splitHost[1]
 	parsedUrl.Path = urlPath
 
+	// Do the actual request, and parse the response
 	result, err := http.Get(parsedUrl.String())
 
 	if (err != nil) {
@@ -99,21 +116,21 @@ func iCallTheURLOfTheApplication(urlPath, applicationName string) error {
 
 	defer result.Body.Close()
 	bodyBytes, _ := ioutil.ReadAll(result.Body)
-	body = string(bodyBytes[:])
+	httpResponseBodyAfterCallingApplicationUrl = string(bodyBytes[:])
 
 	return nil
 }
 
 func theResponseShouldContain(substring string) error {
-	if (!strings.Contains(body, substring)) {
-		return fmt.Errorf("String '%s' should contain '%s', but did not.", body, substring)
+	if (!strings.Contains(httpResponseBodyAfterCallingApplicationUrl, substring)) {
+		return fmt.Errorf("String '%s' should contain '%s', but did not.", httpResponseBodyAfterCallingApplicationUrl, substring)
 	}
 	return nil;
 }
 
 func theResponseShouldNotContain(substring string) error {
-	if (strings.Contains(body, substring)) {
-		return fmt.Errorf("String '%s' should not contain '%s', but did.", body, substring)
+	if (strings.Contains(httpResponseBodyAfterCallingApplicationUrl, substring)) {
+		return fmt.Errorf("String '%s' should not contain '%s', but did.", httpResponseBodyAfterCallingApplicationUrl, substring)
 	}
 	return nil;
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/kardianos/osext"
 )
 
+// create a configuration JSON from a data table
 func theConfigurationIs(configuration *gherkin.DataTable) error {
 	config := make(map[string]string)
 

@@ -9,7 +9,6 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/behavioral-tests/httpServerStoppableListener"
 	"strconv"
 	"time"
-	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"strings"
 	"io/ioutil"
 	"github.com/elgs/gojq"
@@ -17,78 +16,95 @@ import (
 	"regexp"
 )
 
+// this waitGroup is used to block until the application server has fully shut down.
+// Initialized in theAPIDeliveryHttpServerIsAvailableAt().
+var httpServerShutdownWaitGroup *sync.WaitGroup
+
+// Which HTTP status code shall be returned for HTTP requests?
+// Initialized in theAPIDeliveryHttpServerIsAvailableAt(), can be overridden using
+// theAPIDeliveryHttpServerAlwaysRespondsWithStatusCode()
+var httpStatusCodeToReturnForRequests int
+
+// Ensure the HTTP server is switched off
 func theAPIDeliveryHttpServerIsDisabled() error {
+	if httpServerShutdownWaitGroup != nil {
+		httpServerShutdownWaitGroup.Wait()
+	}
 	return nil
 }
 
-var httpServerWaitGroup *sync.WaitGroup
-var httpStatusCode int
-
+// Create a HTTP Server at $port, for at most $timeout seconds or $numberOfRequests (whatever comes first).
 func theAPIDeliveryHttpServerIsAvailableAt(port int, timeout int, numberOfRequests int) error {
-	if (httpServerWaitGroup != nil) {
-		httpServerWaitGroup.Wait()
+
+	// If a HTTP Server is already running, wait for it to shut down until continuing.
+	if httpServerShutdownWaitGroup != nil {
+		httpServerShutdownWaitGroup.Wait()
 	}
 
-	httpServerWaitGroup = new(sync.WaitGroup)
+	// Create the WaitGroup; and by default return status 200.
+	httpServerShutdownWaitGroup = new(sync.WaitGroup)
+	httpStatusCodeToReturnForRequests = 200
 
-	httpStatusCode = 200
-
+	// Listen to the given port
 	originalListener, err := net.Listen("tcp", ":" + strconv.Itoa(port))
 	if err != nil {
 		panic(err)
 	}
 
-	sl, err := httpServerStoppableListener.New(originalListener)
+	// Wrap the originalListener in a stoppableListener, which can be properly shut down again.
+	stoppableListener, err := httpServerStoppableListener.New(originalListener)
 	if err != nil {
 		panic(err)
 	}
 
+	// we use a custom serveMux here; as when using http.HandleFunc directly, we cannot
+	// reset the handlers for the next test case; as the system always uses a "DetaultServeMux"
 	serveMux := http.NewServeMux()
-	serveMux.HandleFunc("/", _httpHandlerFactory(sl, numberOfRequests))
+	serveMux.HandleFunc("/", _httpHandlerFactory(stoppableListener, numberOfRequests))
 	server := http.Server{Handler: serveMux}
 
-	httpServerWaitGroup.Add(1)
+	// the shutdownWaitGroup should block until "done()" is called once.
+	httpServerShutdownWaitGroup.Add(1)
+
+	// Directly start an anonymous goroutine, which:
+	// - when the goroutine finished, un-block the waitGroup (done with "defer")
+	// - start the server
+	// - (when the server stopped at a later point in time, httpServerShutdownWaitGroup.Done() will be called as this is the end of the Goroutine
 	go func() {
-		defer httpServerWaitGroup.Done()
-		server.Serve(sl)
+		defer httpServerShutdownWaitGroup.Done()
+		server.Serve(stoppableListener)
 	}()
 
+	// Always stop the goroutine after the timeout!
 	go func() {
 		time.Sleep(time.Duration(timeout) * time.Second)
-		fmt.Printf("Timeout\n")
-		sl.Stop()
+		stoppableListener.Stop()
 	}()
-
-	//fmt.Printf("Waiting on server\n")
-	//wg.Wait()
-	//fmt.Printf("Waiting done\n")
 
 	return nil
 }
 
 func theAPIDeliveryHttpServerAlwaysRespondsWithStatusCode(statusCode int) error {
-	httpStatusCode = statusCode
+	httpStatusCodeToReturnForRequests = statusCode
 	return nil
 }
 
-func iCallDokku(dokkuArguments string) error {
-	args := strings.Split(dokkuArguments, " ")
 
-	utility.ExecCommand(append([]string{"ssh", "dokku@dokku.me"}, args...)...)
-
-	return nil
-}
-
+// a single request to the mock HTTP server; stored for later inspection.
 type receivedRequest struct {
 	url  string
 	body []byte
 }
 
+// all requests to the mock HTTP server, stored for later inspection.
+var requestList []receivedRequest
+
 type httpHandlerFunc func(w http.ResponseWriter, r *http.Request)
 
-var requestList []receivedRequest;
-
+// Store all requests which are coming in for later evaluation / assertions.
 func _httpHandlerFactory(stoppableListener *httpServerStoppableListener.StoppableListener, maxNumberOfRequests int) httpHandlerFunc {
+
+	// First, initialize/reset the requestList and count the number of received requests
 	requestList = make([]receivedRequest, 0, maxNumberOfRequests)
 	var numberOfRequestsSoFar = 0
 
@@ -100,18 +116,20 @@ func _httpHandlerFactory(stoppableListener *httpServerStoppableListener.Stoppabl
 			url: r.URL.Path,
 			body: requestBodyBytes,
 		})
-		if (maxNumberOfRequests >= numberOfRequestsSoFar) {
+
+		if maxNumberOfRequests >= numberOfRequestsSoFar {
+			// we've received all requests we wanted to receive; so let's shutdown!
 			stoppableListener.Stop()
 		}
 
-		w.WriteHeader(httpStatusCode)
+		w.WriteHeader(httpStatusCodeToReturnForRequests)
 		fmt.Fprintf(w, "OK")
 	}
-
 }
 
+// Main assertion library for HTTP requests
 func theAPIDeliveryHttpServerReceivedTheFollowingJSONAtEvent(requestNumber int, url string, comparators *gherkin.DataTable) error {
-	httpServerWaitGroup.Wait()
+	httpServerShutdownWaitGroup.Wait()
 
 	if (requestNumber <= 0) {
 		return fmt.Errorf("Request number must be greater than 1")
