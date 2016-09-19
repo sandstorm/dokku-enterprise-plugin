@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/DATA-DOG/godog/gherkin"
 	"encoding/json"
-	"io/ioutil"
+	"github.com/DATA-DOG/godog/gherkin"
 	"github.com/kardianos/osext"
+	"io/ioutil"
 )
 
 // create a configuration JSON from a data table
@@ -18,7 +18,7 @@ func theConfigurationIs(configuration *gherkin.DataTable) error {
 	configAsBytes, _ := json.MarshalIndent(config, "", "    ")
 
 	behavioralTestsFolder, _ := osext.ExecutableFolder()
-	ioutil.WriteFile(behavioralTestsFolder + "/../bin-build/config.json", configAsBytes, 0644)
+	ioutil.WriteFile(behavioralTestsFolder+"/../bin-build/config.json", configAsBytes, 0644)
 
 	return nil
 }

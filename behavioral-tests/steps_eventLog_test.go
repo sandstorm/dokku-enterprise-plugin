@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"strconv"
-	"fmt"
 )
 
 // asset the event log is empty
@@ -17,7 +17,7 @@ func iExpectEventLogEntry(expectedNumberOfLines int) error {
 	result := utility.ExecCommand("ssh", "root@dokku.me", "ls /home/dokku/.event-log-tmp/ | wc -l")
 	numberOfLines, _ := strconv.Atoi(result)
 
-	if (numberOfLines != expectedNumberOfLines) {
+	if numberOfLines != expectedNumberOfLines {
 		return fmt.Errorf("Expected %d number of log entries, got %d", expectedNumberOfLines, numberOfLines)
 	}
 

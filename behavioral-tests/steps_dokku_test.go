@@ -1,16 +1,16 @@
 package main
 
 import (
-	"github.com/DATA-DOG/godog/gherkin"
-	"os"
-	"io/ioutil"
-	"path/filepath"
-	"os/exec"
-	"net/url"
-	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
-	"net/http"
-	"strings"
 	"fmt"
+	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 // Create a quite-minimal dokku Dockerfile application (as basis for testing)
@@ -26,13 +26,13 @@ func iHaveAnEmptyDockerfileApplication() error {
 		EXPOSE 5000
 		RUN cp /app/nginx.conf /etc/nginx/nginx.conf
 		CMD ["nginx", "-g", "daemon off;"]
-	`;
+	`
 	ioutil.WriteFile("Dockerfile", []byte(dockerfileContents), 0644)
 
 	checksContents := `
 		WAIT=1
 		http://test/ welcome
-	`;
+	`
 	ioutil.WriteFile("CHECKS", []byte(checksContents), 0644)
 
 	nginxConf := `
@@ -50,10 +50,10 @@ func iHaveAnEmptyDockerfileApplication() error {
 				}
 			}
 		}
-	`;
+	`
 	ioutil.WriteFile("nginx.conf", []byte(nginxConf), 0644)
 
-	index := "welcome";
+	index := "welcome"
 	ioutil.WriteFile("index.html", []byte(index), 0644)
 
 	return nil
@@ -72,12 +72,12 @@ func iRemoveTheFile(filePath string) error {
 }
 
 func iDeployTheApplicationAs(applicationName string) error {
-	exec.Command("git", "init").Run();
-	exec.Command("git", "add", ".").Run();
-	exec.Command("git", "commit", "-m", "Initial commit").Run();
-	result := utility.ExecCommand("git", "push", "--force", "dokku@dokku.me:" + applicationName, "HEAD:master");
+	exec.Command("git", "init").Run()
+	exec.Command("git", "add", ".").Run()
+	exec.Command("git", "commit", "-m", "Initial commit").Run()
+	result := utility.ExecCommand("git", "push", "--force", "dokku@dokku.me:"+applicationName, "HEAD:master")
 
-	if (strings.Contains(result, "Application deployed:")) {
+	if strings.Contains(result, "Application deployed:") {
 		return nil
 	} else {
 		return fmt.Errorf("Deployment was not successful. Full log: %s", result)
@@ -94,14 +94,14 @@ func iCallDokku(dokkuArguments string) error {
 }
 
 // the HTTP response body as string; filled as result of iCallTheURLOfTheApplication()
-var httpResponseBodyAfterCallingApplicationUrl string;
+var httpResponseBodyAfterCallingApplicationUrl string
 
 // Call the URL of an application.
 func iCallTheURLOfTheApplication(urlPath, applicationName string) error {
 
 	// First, we need to figure out the port the application is running on; and we need to prefix "dokku.me"
 	// for the host to work properly across Vagrant development environments.
-	domainName := utility.ExecCommand("ssh", "dokku@dokku.me", "urls", applicationName);
+	domainName := utility.ExecCommand("ssh", "dokku@dokku.me", "urls", applicationName)
 	parsedUrl, _ := url.Parse(domainName)
 	splitHost := strings.Split(parsedUrl.Host, ":")
 	parsedUrl.Host = "dokku.me:" + splitHost[1]
@@ -110,8 +110,8 @@ func iCallTheURLOfTheApplication(urlPath, applicationName string) error {
 	// Do the actual request, and parse the response
 	result, err := http.Get(parsedUrl.String())
 
-	if (err != nil) {
-		return fmt.Errorf("Error while calling %s: %s", parsedUrl.String(), err);
+	if err != nil {
+		return fmt.Errorf("Error while calling %s: %s", parsedUrl.String(), err)
 	}
 
 	defer result.Body.Close()
@@ -122,15 +122,15 @@ func iCallTheURLOfTheApplication(urlPath, applicationName string) error {
 }
 
 func theResponseShouldContain(substring string) error {
-	if (!strings.Contains(httpResponseBodyAfterCallingApplicationUrl, substring)) {
+	if !strings.Contains(httpResponseBodyAfterCallingApplicationUrl, substring) {
 		return fmt.Errorf("String '%s' should contain '%s', but did not.", httpResponseBodyAfterCallingApplicationUrl, substring)
 	}
-	return nil;
+	return nil
 }
 
 func theResponseShouldNotContain(substring string) error {
-	if (strings.Contains(httpResponseBodyAfterCallingApplicationUrl, substring)) {
+	if strings.Contains(httpResponseBodyAfterCallingApplicationUrl, substring) {
 		return fmt.Errorf("String '%s' should not contain '%s', but did.", httpResponseBodyAfterCallingApplicationUrl, substring)
 	}
-	return nil;
+	return nil
 }

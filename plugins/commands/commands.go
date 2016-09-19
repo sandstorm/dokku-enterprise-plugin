@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
-	"github.com/sandstorm/dokku-enterprise-plugin/core/dokku"
 	"fmt"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/applicationLifecycleLogging"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/dokku"
+	"os"
 )
 
 // http://dokku.viewdocs.io/dokku/development/plugin-creation/

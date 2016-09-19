@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
-	"os"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/dokku"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"io/ioutil"
+	"os"
 )
 
 // http://dokku.viewdocs.io/dokku/development/plugin-triggers/#nginx-pre-reload
@@ -17,7 +17,7 @@ func main() {
 	os.RemoveAll(nginxConfDirectory)
 
 	appContainerId := dokku.GetAppContainerId(app)
-	utility.ExecCommand("docker", "cp", appContainerId + ":/app/nginx.conf.d", nginxConfDirectory)
+	utility.ExecCommand("docker", "cp", appContainerId+":/app/nginx.conf.d", nginxConfDirectory)
 
 	files, _ := ioutil.ReadDir(nginxConfDirectory)
 	for _, f := range files {

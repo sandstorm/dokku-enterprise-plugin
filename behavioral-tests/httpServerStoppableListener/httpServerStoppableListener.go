@@ -1,4 +1,5 @@
 package httpServerStoppableListener
+
 // Taken from https://github.com/hydrogen18/stoppableListener/blob/master/example/example.go
 
 import (
@@ -42,7 +43,7 @@ func (sl *StoppableListener) Accept() (net.Conn, error) {
 		case <-sl.stop:
 			return nil, StoppedError
 		default:
-		//If the channel is still open, continue as normal
+			//If the channel is still open, continue as normal
 		}
 
 		if err != nil {
@@ -60,7 +61,7 @@ func (sl *StoppableListener) Accept() (net.Conn, error) {
 }
 
 func (sl *StoppableListener) Stop() {
-	if (!sl.isStopChanClosed) {
+	if !sl.isStopChanClosed {
 		close(sl.stop)
 	}
 
