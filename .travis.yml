@@ -9,7 +9,7 @@ install: glide install
 script:
 - ./build.sh
 - cd dokku-src
-- DEBIAN_FRONTEND=noninteractive make -e install
+- DEBIAN_FRONTEND=noninteractive sudo make -e install
 
 sudo: required
 services:
