@@ -20,6 +20,8 @@ Implementation note: This is realized using the `nginx-pre-reload` hook.
 
 ## Developing
 
+### Initial Setup
+
 go get github.com/DATA-DOG/godog/cmd/godog
 
 brew install glide
@@ -31,7 +33,12 @@ go to http://dokku.me - and press "save" once.
 
 
 
+### manual Building
  
  ./build.sh; ssh dokku@dokku.me storage:mount test /tmp:/b
  
  ./build.sh; ssh dokku@dokku.me 
+
+### Integration tests
+
+./integration-test.sh
