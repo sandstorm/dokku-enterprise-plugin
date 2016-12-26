@@ -101,8 +101,10 @@ func iCallTheURLOfTheApplication(urlPath, applicationName string) error {
 
 	// First, we need to figure out the port the application is running on; and we need to prefix "dokku.me"
 	// for the host to work properly across Vagrant development environments.
-	domainName := utility.ExecCommand("ssh", "dokku@dokku.me", "urls", applicationName)
-	parsedUrl, _ := url.Parse(domainName)
+
+	domainNames := utility.ExecCommand("ssh", "dokku@dokku.me", "urls", applicationName)
+	domainNamesArray := strings.Split(domainNames, "\n")
+	parsedUrl, _ := url.Parse(domainNamesArray[0])
 	splitHost := strings.Split(parsedUrl.Host, ":")
 	parsedUrl.Host = "dokku.me:" + splitHost[1]
 	parsedUrl.Path = urlPath
