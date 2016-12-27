@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"github.com/sandstorm/dokku-enterprise-plugin/behavioral-tests/jsonQueryHelper"
 )
 
 // Create a quite-minimal dokku Dockerfile application (as basis for testing)
@@ -84,13 +85,19 @@ func iDeployTheApplicationAs(applicationName string) error {
 	}
 }
 
+var dokkuResponseBody string
+
 // Call dokku with some arguments
 func iCallDokku(dokkuArguments string) error {
 	args := strings.Split(dokkuArguments, " ")
 
-	utility.ExecCommand(append([]string{"ssh", "dokku@dokku.me"}, args...)...)
+	dokkuResponseBody = utility.ExecCommand(append([]string{"ssh", "dokku@dokku.me"}, args...)...)
 
 	return nil
+}
+
+func iGetBackAJSONObjectWithTheFollowingStructure(comparators *gherkin.DataTable) error {
+	return jsonQueryHelper.AssertJsonStructure(dokkuResponseBody, comparators)
 }
 
 // the HTTP response body as string; filled as result of iCallTheURLOfTheApplication()
