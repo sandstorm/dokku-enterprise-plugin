@@ -21,7 +21,7 @@ func AssertJsonStructure(jsonString string, comparators *gherkin.DataTable) erro
 
 	for i, value := range comparators.Rows {
 		if len(value.Cells) != 3 {
-			return fmt.Errorf("every comparison needs to be written in exactly 3 columns; but in row %d I found %d.", i+1, len(value.Cells))
+			return fmt.Errorf("every comparison needs to be written in exactly 3 columns; but in row %d I found %d.", i + 1, len(value.Cells))
 		}
 
 		fieldPath := value.Cells[0].Value
@@ -48,6 +48,15 @@ func AssertJsonStructure(jsonString string, comparators *gherkin.DataTable) erro
 				}
 			default:
 				return fmt.Errorf("equals comparison for unknown type value in line %d - type was: %s", i, reflect.TypeOf(value))
+			}
+		case "contains":
+			switch value.(type) {
+			case string:
+				if !strings.Contains(value.(string), operand) {
+					return fmt.Errorf("String '%s' does not contain '%s' at path %s. (line %d)", value, operand, fieldPath, i)
+				}
+			default:
+				return fmt.Errorf("contains comparison for unknown type value in line %d - type was: %s", i, reflect.TypeOf(value))
 			}
 		case "is a date":
 			switch value.(type) {

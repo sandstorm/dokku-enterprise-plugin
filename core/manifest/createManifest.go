@@ -19,26 +19,46 @@ func CreateManifest(application string) string {
 		Manifest: manifest,
 	}
 
-	dbUrl, dbUrlExists := parsedApplicationConfig["DATABASE_URL"]
-	if dbUrlExists {
+	extractDatabase(parsedApplicationConfig, "DATABASE_URL", &manifestWrapper)
+	for configKey, _ := range parsedApplicationConfig {
+
 		switch {
-		case strings.Contains(dbUrl, "mysql://mariadb"):
-			manifest.Mariadb = replaceApplicationNameInString(extractDbName(dbUrl), &manifestWrapper, "mariadb")
-		default:
-			manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("Could not parse DB URL, which was %v", dbUrl))
+		case strings.HasPrefix(configKey, "DOKKU_MARIADB_"):
+			extractDatabase(parsedApplicationConfig, configKey, &manifestWrapper)
 		}
-	} else {
-		manifestWrapper.DebugInfo = append(manifestWrapper.DebugInfo, "Did not find DB.")
 	}
 
 	manifestAsBytes, _ := json.MarshalIndent(manifestWrapper, "", "  ")
 	return string(manifestAsBytes)
 }
+
+/************************
+ EXTRACTORS
+ */
+func extractDatabase(parsedApplicationConfig map[string]string, configKey string, manifestWrapper *manifestWrapper) {
+	dbUrl, dbUrlExists := parsedApplicationConfig[configKey]
+	if dbUrlExists {
+		switch {
+		case strings.Contains(dbUrl, "mysql://mariadb"):
+			manifestWrapper.Manifest.Mariadb = append(manifestWrapper.Manifest.Mariadb, replaceApplicationNameInString(extractDbName(dbUrl), manifestWrapper, "mariadb." + configKey))
+		default:
+			manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("Could not parse DB URL, which was %v", dbUrl))
+		}
+
+		delete(parsedApplicationConfig, configKey);
+	} else {
+		manifestWrapper.DebugInfo = append(manifestWrapper.DebugInfo, "Did not find DB.")
+	}
+}
+
+/************************
+ HELPERS
+ */
 func replaceApplicationNameInString(s string, manifestWrapper *manifestWrapper, key string) string {
 	r := strings.Replace(s, manifestWrapper.AppName, "[appName]", -1)
 
 	if !strings.Contains(r, "[appName]") {
-		manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("%v: did not find application name '%v' inside string: %v", key, manifestWrapper.AppName, s))
+		manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("%v: did not find application name '%v' inside string: %v.", key, manifestWrapper.AppName, s))
 	}
 
 	return r
