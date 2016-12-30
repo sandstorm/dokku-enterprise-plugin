@@ -1,3 +1,6 @@
 [submodule "dokku-src"]
 	path = dokku-src
 	url = https://github.com/dokku/dokku.git
+[submodule "dokku-alt-src"]
+	path = dokku-alt-src
+	url = https://github.com/dokku-alt/dokku-alt.git
