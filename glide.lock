@@ -1,18 +1,27 @@
-hash: 0c9ab715f152c4ea02e3550195b2db687ce2ec4ab8ef0caa625ea43b9177b2f0
-updated: 2016-09-17T10:57:57.293596569+02:00
+hash: 4170f2eee07c1df5d2da455655e69f7212cfaddaa67674bb0f7fb4bc353b322e
+updated: 2016-12-30T16:48:03.787884364+01:00
 imports:
-- name: github.com/kardianos/osext
-  version: c2c54e542fb797ad986b31721e1baedf214ca413
-- name: github.com/satori/go.uuid
-  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
-testImports:
+- name: code.google.com/p/go.crypto
+  version: f6b343c37ca80bfa8ea539da67a0b621f84fab1d
+  repo: https://golang.org/x/crypto
+  subpackages:
+  - ssh/terminal
 - name: github.com/DATA-DOG/godog
   version: 6e3b3f764a57d37691c0dfd007e7e586d3e452dc
   subpackages:
   - gherkin
 - name: github.com/elgs/gojq
   version: 81fa9a608a130323eaf4b4fc00224f7a467ffbd1
-  subpackages:
-  - github.com/elgs/gosplitargs
 - name: github.com/elgs/gosplitargs
   version: e9cf3de21e146ace7f4a8a42af3d51caf7fe2f3b
+- name: github.com/graymeta/stow
+  version: 40ddb0743e48a0b979b7dc57ff214a686b0e1ef2
+- name: github.com/kardianos/osext
+  version: c2c54e542fb797ad986b31721e1baedf214ca413
+- name: github.com/satori/go.uuid
+  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+- name: golang.org/x/sys
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  subpackages:
+  - unix
+testImports: []

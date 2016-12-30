@@ -2,11 +2,14 @@ package: github.com/sandstorm/dokku-enterprise-plugin
 import:
 - package: github.com/satori/go.uuid
 - package: github.com/kardianos/osext
+- package: code.google.com/p/go.crypto
+  repo: https://golang.org/x/crypto
+- package: github.com/graymeta/stow
+  version: ~0.1.0
 testImport:
 - package: github.com/DATA-DOG/godog
   subpackages:
   - gherkin
-
 - package: github.com/elgs/gojq
   subpackages:
   - github.com/elgs/gosplitargs
