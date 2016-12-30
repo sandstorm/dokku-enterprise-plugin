@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"github.com/sandstorm/dokku-enterprise-plugin/behavioral-tests/jsonQueryHelper"
+	"bytes"
 )
 
 // Create a quite-minimal dokku Dockerfile application (as basis for testing)
@@ -76,7 +77,7 @@ func iDeployTheApplicationAs(applicationName string) error {
 	exec.Command("git", "init").Run()
 	exec.Command("git", "add", ".").Run()
 	exec.Command("git", "commit", "-m", "Initial commit").Run()
-	result := utility.ExecCommand("git", "push", "--force", "dokku@dokku.me:"+applicationName, "HEAD:master")
+	result := utility.ExecCommand("git", "push", "--force", "dokku@dokku.me:" + applicationName, "HEAD:master")
 
 	if strings.Contains(result, "Application deployed:") {
 		return nil
@@ -96,8 +97,24 @@ func iCallDokku(dokkuArguments string) error {
 	return nil
 }
 
+func iCallDokkuWithPayload(dokkuArguments string, payload *gherkin.DocString) error {
+	args := strings.Split(dokkuArguments, " ")
+
+	dokkuResponseBody = utility.ExecCommandWithStdIn(bytes.NewBufferString(payload.Content), append([]string{"ssh", "dokku@dokku.me"}, args...)...)
+
+	return nil
+}
+
 func iGetBackAJSONObjectWithTheFollowingStructure(comparators *gherkin.DataTable) error {
 	return jsonQueryHelper.AssertJsonStructure(dokkuResponseBody, comparators)
+}
+
+func iGetBackAMessage(expected string) error {
+	if !strings.Contains(dokkuResponseBody, expected) {
+		return fmt.Errorf("Expected string '%v' not found in response body: %v", expected, dokkuResponseBody)
+	}
+
+	return nil
 }
 
 // the HTTP response body as string; filled as result of iCallTheURLOfTheApplication()
