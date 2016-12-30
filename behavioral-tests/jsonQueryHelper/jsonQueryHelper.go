@@ -86,6 +86,21 @@ func AssertJsonStructure(jsonString string, comparators *gherkin.DataTable) erro
 			if value != nil && len(value.([]interface{})) > 0 {
 				return fmt.Errorf("'%v' is not empty at path %s. (line %d)", value, fieldPath, i)
 			}
+		case "count":
+			operandInt, _ := strconv.Atoi(operand)
+
+			switch value.(type) {
+			case map[string]interface{}:
+				if len(value.(map[string]interface{})) != operandInt {
+					return fmt.Errorf("Value '%s' expected to have a count of %d, but is %d at path %s. (line %d)", value, operandInt, len(value.(map[string]interface{})), fieldPath, i)
+				}
+			default:
+				return fmt.Errorf("count comparison in line %d only works for type map - type was: %s", i, reflect.TypeOf(value))
+			}
+
+
+
+
 		default:
 			return fmt.Errorf("Comparator %s not supported (line %d)", comparator, i)
 		}

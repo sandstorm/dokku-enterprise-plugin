@@ -1,4 +1,4 @@
-Feature: I can export the Configuration Manifest, containing the full config for an application with all DBs etc
+Feature: I can export the Configuration Manifest -- part DATABASE
 
   In order to create reproducible installations across instances of services, I want to be able to export
   all configuration to a "manifest".
