@@ -7,6 +7,7 @@ import (
 	"os"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/manifest"
 	"io/ioutil"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 )
 
 // http://dokku.viewdocs.io/dokku/development/plugin-creation/
@@ -15,11 +16,15 @@ func main() {
 
 	switch command {
 	case "manifest:export":
-		fmt.Println(manifest.CreateManifest(os.Args[2]))
+		manifest := manifest.CreateManifest(os.Args[2])
+		fmt.Println(string(manifest))
 	case "manifest:import":
 		bytes, _ := ioutil.ReadAll(os.Stdin)
 		manifest.ImportManifest(os.Args[2], string(bytes))
-
+	case "manifest:exportToStorage":
+		manifest := manifest.CreateManifest(os.Args[2])
+		encryptedManifest := utility.Encrypt(manifest)
+		fmt.Println(string(encryptedManifest))
 	case "collectMetrics":
 		applicationLifecycleLogging.TryToSendToServer()
 		fmt.Println("Collect Metrics Done.")

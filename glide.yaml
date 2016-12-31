@@ -6,6 +6,9 @@ import:
   repo: https://golang.org/x/crypto
 - package: github.com/graymeta/stow
   version: ~0.1.0
+- package: golang.org/x/crypto
+  subpackages:
+  - openpgp/armor
 testImport:
 - package: github.com/DATA-DOG/godog
   subpackages:

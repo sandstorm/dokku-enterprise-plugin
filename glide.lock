@@ -1,10 +1,12 @@
-hash: 4170f2eee07c1df5d2da455655e69f7212cfaddaa67674bb0f7fb4bc353b322e
-updated: 2016-12-30T16:48:03.787884364+01:00
+hash: 7bb8709f52fa745dcd87bd1620b18369a02848de00aaa10269dccd430a4e72dc
+updated: 2016-12-31T09:54:01.998156489+01:00
 imports:
 - name: code.google.com/p/go.crypto
   version: f6b343c37ca80bfa8ea539da67a0b621f84fab1d
   repo: https://golang.org/x/crypto
   subpackages:
+  - openpgp
+  - openpgp/armor
   - ssh/terminal
 - name: github.com/DATA-DOG/godog
   version: 6e3b3f764a57d37691c0dfd007e7e586d3e452dc
@@ -20,6 +22,15 @@ imports:
   version: c2c54e542fb797ad986b31721e1baedf214ca413
 - name: github.com/satori/go.uuid
   version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+- name: golang.org/x/crypto
+  version: f6b343c37ca80bfa8ea539da67a0b621f84fab1d
+  subpackages:
+  - cast5
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:

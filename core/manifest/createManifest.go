@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-func CreateManifest(application string) string {
+func CreateManifest(application string) []byte {
 	applicationConfig := utility.ExecCommand("dokku", "--quiet", "config", application)
 
 	parsedApplicationConfig := parseConfig(applicationConfig)
@@ -49,7 +49,7 @@ func CreateManifest(application string) string {
 	extractDockerOptions(&manifestWrapper, "build")
 
 	manifestAsBytes, _ := json.MarshalIndent(manifestWrapper, "", "  ")
-	return string(manifestAsBytes)
+	return manifestAsBytes
 }
 
 /************************
