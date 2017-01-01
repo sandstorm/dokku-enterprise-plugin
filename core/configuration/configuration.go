@@ -14,15 +14,16 @@ type configuration struct {
 }
 
 type cloudBackup struct {
-	EncryptionKey       string `json:"encryptionKey"`
-	CloudType           string `json:"type"`
-	AwsAccessKey        string `json:"accessKey"`
-	AwsSecretKey        string `json:"secretKey"`
-	AwsRegion           string `json:"region"`
+	EncryptionKey   string `json:"encryptionKey"`
+	StorageBucket   string `json:"storageBucket"`
 
-	GoogleProjectId     string `json:"googleProjectId"`
-	GoogleStorageBucket string `json:"googleStorageBucket"`
-	GoogleConfig        interface{} `json:"googleConfig"`
+	CloudType       string `json:"type"`
+	AwsAccessKey    string `json:"accessKey"`
+	AwsSecretKey    string `json:"secretKey"`
+	AwsRegion       string `json:"region"`
+
+	GoogleProjectId string `json:"googleProjectId"`
+	GoogleConfig    interface{} `json:"googleConfig"`
 }
 
 func (c cloudBackup) GetEncryptionKey() []byte {

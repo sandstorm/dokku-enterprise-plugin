@@ -32,20 +32,22 @@ func main() {
 		if err != nil {
 			log.Fatalf("ERROR while creating temp dir: %v", err)
 		}
+		defer os.RemoveAll(exportTempDir)
+
 
 		log.Printf("INFO: Starting export of application %s", application)
 		log.Printf("DEBUG: Temp Dir: %s", exportTempDir)
 
-		manifest.CreateManifestAndStoreDataIntoTemporaryFolder(application, exportTempDir)
-		manifestBytes, _ := ioutil.ReadFile(exportTempDir + "/manifest.json")
+		manifest.CreateManifestAndStoreDataIntoTemporaryFolder(application, exportTempDir + "/app/")
+		manifestBytes, _ := ioutil.ReadFile(exportTempDir + "/app/manifest.json")
 		log.Printf("INFO: Manifest created. Manifest is: \n%s", string(manifestBytes))
 
 		t := time.Now()
 		fileName := fmt.Sprintf("%s__%s__%s.tar.gz", application, t.Format("2006-01-02_15-04-05"), dokku.Hostname())
-		tarGzFile := os.TempDir() + "/" + fileName
+		tarGzFile := exportTempDir + "/" + fileName
 		log.Printf("DEBUG: exporting tar.gz to %s", tarGzFile)
 
-		err = archiver.TarGz.Make(tarGzFile, []string{exportTempDir})
+		err = archiver.TarGz.Make(tarGzFile, []string{exportTempDir + "/app"})
 		if err != nil {
 			log.Fatalf("ERROR: could create tar.gz file, error was: %v", err)
 		}
@@ -72,9 +74,9 @@ func main() {
 			log.Fatalf("ERROR: could not connect to Cloud Storage, error was: %v", err)
 		}
 
-		container, err := location.Container(configuration.Get().CloudBackup.GoogleStorageBucket)
+		container, err := location.Container(configuration.Get().CloudBackup.StorageBucket)
 		if err != nil {
-			log.Fatalf("ERROR: did not find storage bucket '%s': %v", configuration.Get().CloudBackup.GoogleStorageBucket, err)
+			log.Fatalf("ERROR: did not find storage bucket '%s': %v", configuration.Get().CloudBackup.StorageBucket, err)
 		}
 
 		// HINT: for the google implmentation, we can IGNORE the size value! :-) (we don't have it due to streaming!)
