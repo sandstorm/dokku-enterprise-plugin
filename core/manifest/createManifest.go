@@ -5,9 +5,18 @@ import (
 	"strings"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"strconv"
 )
 
 func CreateManifest(application string) []byte {
+	return CreateManifestAndStoreDataIntoTemporaryFolder(application, "")
+}
+/**
+ * Second argument might be NULL
+ */
+func CreateManifestAndStoreDataIntoTemporaryFolder(application string, temporaryFolder string) []byte {
 	applicationConfig := utility.ExecCommand("dokku", "--quiet", "config", application)
 
 	parsedApplicationConfig := parseConfig(applicationConfig)
@@ -21,11 +30,20 @@ func CreateManifest(application string) []byte {
 	}
 
 	// Database (Mariadb)
-	extractDatabase(parsedApplicationConfig, "DATABASE_URL", &manifestWrapper)
+	dbName := extractMariadb(parsedApplicationConfig, "DATABASE_URL", &manifestWrapper)
+	if len(dbName) > 0 && len(temporaryFolder) > 0 {
+		utility.ExecCommandAndDumpResultToFile(temporaryFolder + "/mariadb/0.sql", "dokku", "mariadb:export", dbName)
+	}
+	dbIndex := 1
 	for configKey, _ := range parsedApplicationConfig {
 		switch {
 		case strings.HasPrefix(configKey, "DOKKU_MARIADB_"):
-			extractDatabase(parsedApplicationConfig, configKey, &manifestWrapper)
+			dbName := extractMariadb(parsedApplicationConfig, configKey, &manifestWrapper)
+			if len(dbName) > 0 && len(temporaryFolder) > 0 {
+				utility.ExecCommandAndDumpResultToFile(temporaryFolder + "/mariadb/" + strconv.Itoa(dbIndex) + ".sql", "dokku", "mariadb:export", dbName)
+			}
+
+			dbIndex++
 		}
 	}
 
@@ -48,19 +66,31 @@ func CreateManifest(application string) []byte {
 	extractDockerOptions(&manifestWrapper, "run")
 	extractDockerOptions(&manifestWrapper, "build")
 
-	manifestAsBytes, _ := json.MarshalIndent(manifestWrapper, "", "  ")
+	manifestAsBytes, err := json.MarshalIndent(manifestWrapper, "", "  ")
+
+	if err != nil {
+		log.Fatalf("There was an error serializing JSON manifest: %v", err)
+	}
+
+	if len(temporaryFolder) > 0 {
+		ioutil.WriteFile(temporaryFolder + "/manifest.json", manifestAsBytes, 0644)
+	}
 	return manifestAsBytes
 }
 
 /************************
  EXTRACTORS
  */
-func extractDatabase(parsedApplicationConfig map[string]string, configKey string, manifestWrapper *manifestWrapper) {
+
+// returns the DB name, if found!
+func extractMariadb(parsedApplicationConfig map[string]string, configKey string, manifestWrapper *manifestWrapper) string {
 	dbUrl, dbUrlExists := parsedApplicationConfig[configKey]
 	if dbUrlExists {
 		switch {
 		case strings.Contains(dbUrl, "mysql://mariadb"):
 			manifestWrapper.Manifest.Mariadb = append(manifestWrapper.Manifest.Mariadb, replaceApplicationNameInString(extractDbName(dbUrl), manifestWrapper, "mariadb." + configKey, ""))
+
+			return extractDbName(dbUrl)
 		default:
 			manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("Could not parse DB URL, which was %v", dbUrl))
 		}
@@ -69,6 +99,7 @@ func extractDatabase(parsedApplicationConfig map[string]string, configKey string
 	} else {
 		manifestWrapper.DebugInfo = append(manifestWrapper.DebugInfo, "Did not find DB.")
 	}
+	return ""
 }
 
 func extractDockerOptions(manifestWrapper *manifestWrapper, phase string) {

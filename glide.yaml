@@ -4,11 +4,21 @@ import:
 - package: github.com/kardianos/osext
 - package: code.google.com/p/go.crypto
   repo: https://golang.org/x/crypto
-- package: github.com/graymeta/stow
-  version: ~0.1.0
 - package: golang.org/x/crypto
   subpackages:
   - openpgp/armor
+- package: github.com/graymeta/stow
+  version: d6bcc4c03c2c3de50e1375f91b25ae06d2fc3241
+- package: github.com/aws/aws-sdk-go
+  version: ~1.6.9
+- package: github.com/mholt/archiver
+  version: ~2.0.0
+- package: github.com/dsnet/compress
+  subpackages:
+  - bzip2
+- package: github.com/nwaples/rardecode
+- package: github.com/ulikunitz/xz
+  version: ~0.5.2
 testImport:
 - package: github.com/DATA-DOG/godog
   subpackages:

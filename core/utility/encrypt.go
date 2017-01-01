@@ -7,14 +7,14 @@ import (
 	"log"
 	"io/ioutil"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/configuration"
+	"io"
 )
 
 
-func Encrypt(encryptionText []byte) []byte {
+func Encrypt(textToEncrypt io.Reader, writerForOutput io.Writer) {
 	encryptionType := "PGP SIGNATURE"
 
-	encbuf := bytes.NewBuffer(nil)
-	w, err := armor.Encode(encbuf, encryptionType, nil)
+	w, err := armor.Encode(writerForOutput, encryptionType, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,12 +23,12 @@ func Encrypt(encryptionText []byte) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = plaintext.Write(encryptionText)
 
+	if _, err := io.Copy(plaintext, textToEncrypt); err != nil {
+		log.Fatal(err)
+	}
 	plaintext.Close()
 	w.Close()
-
-	return encbuf.Bytes()
 }
 
 func Decrypt(ciphertext []byte) []byte {

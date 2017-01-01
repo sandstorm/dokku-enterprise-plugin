@@ -1,6 +1,11 @@
-hash: 7bb8709f52fa745dcd87bd1620b18369a02848de00aaa10269dccd430a4e72dc
-updated: 2016-12-31T09:54:01.998156489+01:00
+hash: b6465cb643603d5cc218a11b69ba9f80cecc3c61a094ec1bdc2cee74d8331dc8
+updated: 2016-12-31T17:17:31.343082581+01:00
 imports:
+- name: cloud.google.com/go
+  version: e0ba5081473dca0a69826693dca7f03fc0e3d086
+  subpackages:
+  - compute/metadata
+  - internal
 - name: code.google.com/p/go.crypto
   version: f6b343c37ca80bfa8ea539da67a0b621f84fab1d
   repo: https://golang.org/x/crypto
@@ -8,20 +13,49 @@ imports:
   - openpgp
   - openpgp/armor
   - ssh/terminal
+- name: github.com/aws/aws-sdk-go
+  version: 36670f6ab1769ad77fa5f7e2c194398733503635
 - name: github.com/DATA-DOG/godog
   version: 6e3b3f764a57d37691c0dfd007e7e586d3e452dc
   subpackages:
   - gherkin
+- name: github.com/dsnet/compress
+  version: b9aab3c6a04eef14c56384b4ad065e7b73438862
+  subpackages:
+  - bzip2
+  - bzip2/internal/sais
+  - internal
+  - internal/prefix
 - name: github.com/elgs/gojq
   version: 81fa9a608a130323eaf4b4fc00224f7a467ffbd1
 - name: github.com/elgs/gosplitargs
   version: e9cf3de21e146ace7f4a8a42af3d51caf7fe2f3b
+- name: github.com/golang/protobuf
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  subpackages:
+  - proto
+- name: github.com/googleapis/gax-go
+  version: da06d194a00e19ce00d9011a13931c3f6f6887c7
 - name: github.com/graymeta/stow
-  version: 40ddb0743e48a0b979b7dc57ff214a686b0e1ef2
+  version: d6bcc4c03c2c3de50e1375f91b25ae06d2fc3241
+  subpackages:
+  - google
 - name: github.com/kardianos/osext
   version: c2c54e542fb797ad986b31721e1baedf214ca413
+- name: github.com/mholt/archiver
+  version: cdc68dd1f170b8dfc1a0d2231b5bb0967ed67006
+- name: github.com/nwaples/rardecode
+  version: 18e2160743d39d742b3e88d44c3b7bb077936c8d
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
 - name: github.com/satori/go.uuid
   version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+- name: github.com/ulikunitz/xz
+  version: 76f94b7c69c6f84be96bcfc2443042b198689565
+  subpackages:
+  - internal/hash
+  - internal/xlog
+  - lzma
 - name: golang.org/x/crypto
   version: f6b343c37ca80bfa8ea539da67a0b621f84fab1d
   subpackages:
@@ -31,8 +65,58 @@ imports:
   - openpgp/errors
   - openpgp/packet
   - openpgp/s2k
+- name: golang.org/x/net
+  version: 8fd7f25955530b92e73e9e1932a41b522b22ccd9
+  subpackages:
+  - context
+  - context/ctxhttp
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/oauth2
+  version: 314dd2c0bf3ebd592ec0d20847d27e79d0dbe8dd
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
   - unix
+- name: google.golang.org/api
+  version: 55146ba61254fdb1c26d65ff3c04bc1611ad73fb
+  subpackages:
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+  - storage/v1
+- name: google.golang.org/appengine
+  version: 08a149cfaee099e6ce4be01c0113a78c85ee1dee
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
+- name: google.golang.org/grpc
+  version: c8105071640ef29fce843ed96983e864bb18eb0e
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - stats
+  - tap
+  - transport
 testImports: []
