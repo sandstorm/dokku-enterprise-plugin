@@ -25,7 +25,7 @@ func main() {
 	case "manifest:import":
 		bytes, _ := ioutil.ReadAll(os.Stdin)
 		manifest.ImportManifest(os.Args[2], string(bytes))
-	case "manifest:exportWithDataToStorage":
+	case "cloud:backup":
 		application := os.Args[2]
 
 		exportTempDir, err := ioutil.TempDir(os.TempDir(), "storage-export")
