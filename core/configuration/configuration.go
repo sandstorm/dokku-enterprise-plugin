@@ -6,6 +6,7 @@ import (
 	stowgs "github.com/graymeta/stow/google"
 	"encoding/json"
 	"github.com/graymeta/stow/s3"
+	"github.com/graymeta/stow/local"
 )
 
 type configuration struct {
@@ -14,16 +15,18 @@ type configuration struct {
 }
 
 type cloudBackup struct {
-	EncryptionKey   string `json:"encryptionKey"`
-	StorageBucket   string `json:"storageBucket"`
+	EncryptionKey    string `json:"encryptionKey"`
+	StorageBucket    string `json:"storageBucket"`
 
-	CloudType       string `json:"type"`
-	AwsAccessKey    string `json:"accessKey"`
-	AwsSecretKey    string `json:"secretKey"`
-	AwsRegion       string `json:"region"`
+	CloudType        string `json:"type"`
+	AwsAccessKey     string `json:"accessKey"`
+	AwsSecretKey     string `json:"secretKey"`
+	AwsRegion        string `json:"region"`
 
-	GoogleProjectId string `json:"googleProjectId"`
-	GoogleConfig    interface{} `json:"googleConfig"`
+	GoogleProjectId  string `json:"googleProjectId"`
+	GoogleConfig     interface{} `json:"googleConfig"`
+
+	LocalStoragePath string `json:"LocalStoragePath"`
 }
 
 func (c cloudBackup) GetEncryptionKey() []byte {
@@ -37,7 +40,7 @@ func (c cloudBackup) ConnectToStorage() (stow.Location, error) {
 
 	switch c.CloudType {
 	case "s3":
-		return stow.Dial("s3", stow.ConfigMap{
+		return stow.Dial(s3.Kind, stow.ConfigMap{
 			s3.ConfigAccessKeyID: c.AwsAccessKey,
 			s3.ConfigSecretKey:   c.AwsSecretKey,
 			s3.ConfigRegion:      c.AwsRegion,
@@ -57,8 +60,12 @@ func (c cloudBackup) ConnectToStorage() (stow.Location, error) {
 			defer location.Close()
 		}
 		return location, err
+	case "local":
+		return stow.Dial(local.Kind, stow.ConfigMap{
+			local.ConfigKeyPath: c.LocalStoragePath,
+		})
 	default:
-		log.Fatalf("ERROR: Cloud Type %v not supported, one of 's3, google' must be given", c.CloudType)
+		log.Fatalf("ERROR: Cloud Type %v not supported, one of 's3, google' (or 'local' for testing) must be given", c.CloudType)
 	}
 	return nil, nil
 }

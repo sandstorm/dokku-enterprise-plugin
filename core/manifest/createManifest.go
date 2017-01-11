@@ -66,6 +66,13 @@ func CreateManifestAndStoreDataIntoTemporaryFolder(application string, temporary
 	extractDockerOptions(&manifestWrapper, "run")
 	extractDockerOptions(&manifestWrapper, "build")
 
+	if len(temporaryFolder) > 0 {
+		allDockerOptions := make([]string, 0, 20)
+		allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Build...)
+		allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Run...)
+		allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Deploy...)
+	}
+
 	manifestAsBytes, err := json.MarshalIndent(manifestWrapper, "", "  ")
 
 	if err != nil {
@@ -152,4 +159,17 @@ func parseConfig(applicationConfig string) map[string]string {
 		parsed[strings.TrimSpace(split[0])] = strings.TrimSpace(split[1])
 	}
 	return parsed
+}
+
+func removeDuplicates(xs *[]string) {
+	found := make(map[string]bool)
+	j := 0
+	for i, x := range *xs {
+		if !found[x] {
+			found[x] = true
+			(*xs)[j] = (*xs)[i]
+			j++
+		}
+	}
+	*xs = (*xs)[:j]
 }
