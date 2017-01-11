@@ -90,12 +90,11 @@ func extractMariadb(parsedApplicationConfig map[string]string, configKey string,
 		case strings.Contains(dbUrl, "mysql://mariadb"):
 			manifestWrapper.Manifest.Mariadb = append(manifestWrapper.Manifest.Mariadb, replaceApplicationNameInString(extractDbName(dbUrl), manifestWrapper, "mariadb." + configKey, ""))
 
+			delete(parsedApplicationConfig, configKey)
 			return extractDbName(dbUrl)
 		default:
 			manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("Could not parse DB URL, which was %v", dbUrl))
 		}
-
-		delete(parsedApplicationConfig, configKey);
 	} else {
 		manifestWrapper.DebugInfo = append(manifestWrapper.DebugInfo, "Did not find DB.")
 	}
