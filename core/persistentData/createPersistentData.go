@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"github.com/mholt/archiver"
 	"log"
-	"fmt"
 )
 
 func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDir, persistentDataFilePath string) {
@@ -36,7 +35,7 @@ func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDi
 			targetDirectory := persistentDataDir + "/volume/" + volumeParts[0]
 			sourceDirectory := replacePlaceholder(volumeParts[0], manifestWrapper)
 			os.MkdirAll(targetDirectory, 0777)
-			utility.ExecCommand("cp", "-R", sourceDirectory, targetDirectory)
+			utility.ExecCommandAndFailWithFatalErrorOnError("cp", "-R", sourceDirectory, targetDirectory)
 		}
 	}
 

@@ -20,6 +20,16 @@ func ExecCommandWithStdIn(stdin io.Reader, commandParts ...string) string {
 	return execCommandInternal(stdin, commandParts...)
 }
 
+func ExecCommandAndFailWithFatalErrorOnError(commandParts ...string) {
+	command := commandParts[0]
+	commandArgs := commandParts[1:]
+	cmd := exec.Command(command, commandArgs...)
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("FATAL: There was an error running command %v; error was: %v", commandParts, err)
+	}
+}
+
 /**
  * Execute a command and return the output as string
  */
