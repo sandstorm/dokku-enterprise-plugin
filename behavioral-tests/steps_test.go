@@ -6,6 +6,7 @@ func FeatureContext(s *godog.Suite) {
 
 	// steps_configuration_test
 	s.Step(`^the configuration is:$`, theConfigurationIs)
+	s.Step(`^the cloud configuration is:$`, theCloudConfigurationIs)
 
 	// steps_dokku_test
 	s.Step(`^I have an empty Dockerfile application$`, iHaveAnEmptyDockerfileApplication)
@@ -23,6 +24,10 @@ func FeatureContext(s *godog.Suite) {
 	// steps_eventLog_test
 	s.Step(`^the event log is empty$`, theEventLogIsEmpty)
 	s.Step(`^I expect (\d+) event log entr(?:y|ies) on disk$`, iExpectEventLogEntry)
+
+	// steps_files_test
+	s.Step(`^an empty folder "([^"]*)" exists$`, anEmptyFolderExists)
+	s.Step(`^I expect a file "([^"]*)" in folder "([^"]*)"$`, iExpectAFileInFolder)
 
 	// steps_mockHttpServer_test
 	s.Step(`^the API delivery http server is disabled$`, theAPIDeliveryHttpServerIsDisabled)

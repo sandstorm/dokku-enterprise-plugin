@@ -11,7 +11,10 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/configuration"
 	"log"
 	"time"
-	"github.com/mholt/archiver"
+	//"github.com/mholt/archiver"
+	"github.com/graymeta/stow"
+	"path/filepath"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/persistentData"
 )
 
 // http://dokku.viewdocs.io/dokku/development/plugin-creation/
@@ -20,54 +23,32 @@ func main() {
 
 	switch command {
 	case "manifest:export":
-		manifest := manifest.CreateManifest(os.Args[2])
-		fmt.Println(string(manifest))
+		manifestWrapper := manifest.CreateManifest(os.Args[2])
+		fmt.Println(string(manifest.SerializeManifest(manifestWrapper)))
 	case "manifest:import":
 		bytes, _ := ioutil.ReadAll(os.Stdin)
 		manifest.ImportManifest(os.Args[2], string(bytes))
 	case "cloud:backup":
 		application := os.Args[2]
 
+		// BASICS
 		exportTempDir, err := ioutil.TempDir(os.TempDir(), "storage-export")
 		if err != nil {
 			log.Fatalf("ERROR while creating temp dir: %v", err)
 		}
 		defer os.RemoveAll(exportTempDir)
 
-
 		log.Printf("INFO: Starting export of application %s", application)
 		log.Printf("DEBUG: Temp Dir: %s", exportTempDir)
 
-		manifest.CreateManifestAndStoreDataIntoTemporaryFolder(application, exportTempDir + "/app/")
-		manifestBytes, _ := ioutil.ReadFile(exportTempDir + "/app/manifest.json")
-		log.Printf("INFO: Manifest created. Manifest is: \n%s", string(manifestBytes))
-
 		t := time.Now()
-		fileName := fmt.Sprintf("%s__%s__%s.tar.gz", application, t.Format("2006-01-02_15-04-05"), dokku.Hostname())
-		tarGzFile := exportTempDir + "/" + fileName
-		log.Printf("DEBUG: exporting tar.gz to %s", tarGzFile)
+		fileBaseName := fmt.Sprintf("%s__%s__%s", application, t.Format("2006-01-02_15-04-05"), dokku.Hostname())
+		filePathAndBaseName := exportTempDir + "/" + fileBaseName
 
-		err = archiver.TarGz.Make(tarGzFile, []string{exportTempDir + "/app"})
-		if err != nil {
-			log.Fatalf("ERROR: could create tar.gz file, error was: %v", err)
-		}
+		manifestFilePath := filePathAndBaseName + "-manifest.json"
+		persistentDataFilePath := filePathAndBaseName + "-persistent-data.tar.gz"
 
-		unencryptedManifest, err := os.Open(tarGzFile)
-		if err != nil {
-			log.Fatalf("ERROR: %s could not be opened, error was: %v", tarGzFile, err)
-		}
-		defer unencryptedManifest.Close()
-
-		gpgFile, err := os.Create(tarGzFile + ".gpg")
-		if err != nil {
-			log.Fatalf("ERROR: %s could not be created, error was: %v", tarGzFile + ".gpg", err)
-		}
-
-		log.Printf("DEBUG: encrypting tar.gz to %s", tarGzFile + ".gpg")
-		utility.Encrypt(unencryptedManifest, gpgFile)
-		defer gpgFile.Close()
-
-
+		// Cloud Connect
 		log.Print("DEBUG: Uploading to cloud storage...")
 		location, err := configuration.Get().CloudBackup.ConnectToStorage()
 		if err != nil {
@@ -79,22 +60,57 @@ func main() {
 			log.Fatalf("ERROR: did not find storage bucket '%s': %v", configuration.Get().CloudBackup.StorageBucket, err)
 		}
 
-		// HINT: for the google implmentation, we can IGNORE the size value! :-) (we don't have it due to streaming!)
-		gpgFileForReading, err := os.Open(tarGzFile + ".gpg")
-		if err != nil {
-			log.Fatalf("ERROR: %s could not be read, error was: %v", tarGzFile + ".gpg", err)
-		}
-		fileInfo, err := gpgFileForReading.Stat()
-		if err != nil {
-			log.Fatalf("ERROR: file size for %s could not be read, error was: %v", tarGzFile + ".gpg", err)
-		}
+		// MANIFEST
+		manifestWrapper := manifest.CreateManifest(application)
+		manifestBytes := manifest.SerializeManifest(manifestWrapper)
+		err = ioutil.WriteFile(manifestFilePath, manifestBytes, 0755)
+		log.Printf("INFO: Manifest created. Manifest is: \n%s", string(manifestBytes))
 
-		container.Put(fileName + ".gpg", gpgFileForReading, fileInfo.Size(), nil)
-		log.Printf("INFO: DONE! %s", fileName + ".gpg")
+		encryptedPathAndFilename := encryptFile(manifestFilePath)
+		uploadFile(encryptedPathAndFilename, container)
+
+		// PERSISTENT DATA
+		persistentData.CreatePersistentData(manifestWrapper, exportTempDir, persistentDataFilePath)
+		encryptedPathAndFilename = encryptFile(persistentDataFilePath)
+		uploadFile(encryptedPathAndFilename, container)
+
 	case "collectMetrics":
 		applicationLifecycleLogging.TryToSendToServer()
 		fmt.Println("Collect Metrics Done.")
 	default:
 		os.Exit(dokku.DokkuNotImplementedExit())
+	}
+}
+func encryptFile(unencryptedPathAndFilename string) string {
+	encryptedPathAndFilename := unencryptedPathAndFilename + ".gpg"
+	gpgFile, err := os.Create(encryptedPathAndFilename)
+	if err != nil {
+		log.Fatalf("ERROR: %s could not be created, error was: %v", encryptedPathAndFilename, err)
+	}
+
+	sourceFile, err := os.Open(unencryptedPathAndFilename)
+	if err != nil {
+		log.Fatalf("ERROR: %s could not be opened, error was: %v", unencryptedPathAndFilename, err)
+	}
+	defer sourceFile.Close()
+
+	log.Printf("DEBUG: encrypting %s", unencryptedPathAndFilename)
+	utility.Encrypt(sourceFile, gpgFile)
+	gpgFile.Close()
+	return encryptedPathAndFilename
+}
+func uploadFile(pathAndFilename string, container stow.Container) {
+	file, err := os.Open(pathAndFilename)
+	if err != nil {
+		log.Fatalf("ERROR: %s could not be read, error was: %v", pathAndFilename, err)
+	}
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Fatalf("ERROR: file size for %s could not be read, error was: %v", pathAndFilename, err)
+	}
+
+	_, err = container.Put(filepath.Base(pathAndFilename), file, fileInfo.Size(), nil)
+	if err != nil {
+		log.Fatalf("ERROR: %s could not be uploaded, error was: %v", filepath.Base(pathAndFilename), err)
 	}
 }

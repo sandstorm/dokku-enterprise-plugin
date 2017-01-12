@@ -16,7 +16,7 @@ func ImportManifest(application string, manifestAsString string) {
 		return
 	}
 
-	var manifestWrapper manifestWrapper
+	var manifestWrapper ManifestWrapper
 
 	err := json.Unmarshal([]byte(manifestAsString), &manifestWrapper)
 

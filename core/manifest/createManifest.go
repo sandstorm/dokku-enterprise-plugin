@@ -5,44 +5,29 @@ import (
 	"strings"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"strconv"
 )
 
-func CreateManifest(application string) []byte {
-	return CreateManifestAndStoreDataIntoTemporaryFolder(application, "")
-}
-/**
- * Second argument might be NULL
- */
-func CreateManifestAndStoreDataIntoTemporaryFolder(application string, temporaryFolder string) []byte {
+func CreateManifest(application string) ManifestWrapper {
 	applicationConfig := utility.ExecCommand("dokku", "--quiet", "config", application)
 
 	parsedApplicationConfig := parseConfig(applicationConfig)
 	manifest := new(manifest)
 	manifest.Config = make(map[string]string)
 
-	manifestWrapper := manifestWrapper{
+	manifestWrapper := ManifestWrapper{
 		Version: 1,
 		AppName: application,
 		Manifest: manifest,
 	}
 
 	// Database (Mariadb)
-	dbName := extractMariadb(parsedApplicationConfig, "DATABASE_URL", &manifestWrapper)
-	if len(dbName) > 0 && len(temporaryFolder) > 0 {
-		utility.ExecCommandAndDumpResultToFile(temporaryFolder + "/mariadb/0.sql", "dokku", "mariadb:export", dbName)
-	}
+	extractMariadb(parsedApplicationConfig, "DATABASE_URL", &manifestWrapper)
 	dbIndex := 1
 	for configKey, _ := range parsedApplicationConfig {
 		switch {
 		case strings.HasPrefix(configKey, "DOKKU_MARIADB_"):
-			dbName := extractMariadb(parsedApplicationConfig, configKey, &manifestWrapper)
-			if len(dbName) > 0 && len(temporaryFolder) > 0 {
-				utility.ExecCommandAndDumpResultToFile(temporaryFolder + "/mariadb/" + strconv.Itoa(dbIndex) + ".sql", "dokku", "mariadb:export", dbName)
-			}
-
+			extractMariadb(parsedApplicationConfig, configKey, &manifestWrapper)
 			dbIndex++
 		}
 	}
@@ -66,22 +51,17 @@ func CreateManifestAndStoreDataIntoTemporaryFolder(application string, temporary
 	extractDockerOptions(&manifestWrapper, "run")
 	extractDockerOptions(&manifestWrapper, "build")
 
-	if len(temporaryFolder) > 0 {
-		allDockerOptions := make([]string, 0, 20)
-		allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Build...)
-		allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Run...)
-		allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Deploy...)
-	}
+	return manifestWrapper
 
+}
+
+func SerializeManifest(manifestWrapper ManifestWrapper) []byte {
 	manifestAsBytes, err := json.MarshalIndent(manifestWrapper, "", "  ")
 
 	if err != nil {
 		log.Fatalf("There was an error serializing JSON manifest: %v", err)
 	}
 
-	if len(temporaryFolder) > 0 {
-		ioutil.WriteFile(temporaryFolder + "/manifest.json", manifestAsBytes, 0644)
-	}
 	return manifestAsBytes
 }
 
@@ -90,7 +70,7 @@ func CreateManifestAndStoreDataIntoTemporaryFolder(application string, temporary
  */
 
 // returns the DB name, if found!
-func extractMariadb(parsedApplicationConfig map[string]string, configKey string, manifestWrapper *manifestWrapper) string {
+func extractMariadb(parsedApplicationConfig map[string]string, configKey string, manifestWrapper *ManifestWrapper) string {
 	dbUrl, dbUrlExists := parsedApplicationConfig[configKey]
 	if dbUrlExists {
 		switch {
@@ -108,7 +88,7 @@ func extractMariadb(parsedApplicationConfig map[string]string, configKey string,
 	return ""
 }
 
-func extractDockerOptions(manifestWrapper *manifestWrapper, phase string) {
+func extractDockerOptions(manifestWrapper *ManifestWrapper, phase string) {
 	dockerOptions := utility.ExecCommand("dokku", "docker-options", manifestWrapper.AppName, phase)
 
 	for _, line := range strings.Split(dockerOptions, "\n") {
@@ -139,7 +119,7 @@ func extractDockerOptions(manifestWrapper *manifestWrapper, phase string) {
 /************************
  HELPERS
  */
-func replaceApplicationNameInString(s string, manifestWrapper *manifestWrapper, key string, addErrorOnlyIfStringStartsWith string) string {
+func replaceApplicationNameInString(s string, manifestWrapper *ManifestWrapper, key string, addErrorOnlyIfStringStartsWith string) string {
 	r := strings.Replace(s, manifestWrapper.AppName, "[appName]", -1)
 
 	if !strings.Contains(r, "[appName]") && strings.HasPrefix(s, addErrorOnlyIfStringStartsWith) {
@@ -159,17 +139,4 @@ func parseConfig(applicationConfig string) map[string]string {
 		parsed[strings.TrimSpace(split[0])] = strings.TrimSpace(split[1])
 	}
 	return parsed
-}
-
-func removeDuplicates(xs *[]string) {
-	found := make(map[string]bool)
-	j := 0
-	for i, x := range *xs {
-		if !found[x] {
-			found[x] = true
-			(*xs)[j] = (*xs)[i]
-			j++
-		}
-	}
-	*xs = (*xs)[:j]
 }

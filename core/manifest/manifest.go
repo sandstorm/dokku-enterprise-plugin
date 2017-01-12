@@ -1,6 +1,6 @@
 package manifest
 
-type manifestWrapper struct {
+type ManifestWrapper struct {
 	Version   int `json:"version"`
 	AppName   string `json:"appName"`
 	Manifest  *manifest `json:"manifest"`
