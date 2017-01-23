@@ -22,38 +22,42 @@ Implementation note: This is realized using the `nginx-pre-reload` hook.
 
 ### Initial Setup
 
+```
 go get github.com/DATA-DOG/godog/cmd/godog
-
 brew install glide
 glide install
+```
 
+```
 ./build.sh
 vagrant up
-go to http://dokku.me - and press "save" once.
+```
+go to `http://dokku.me` - and press "save" once.
 
 
 
 ### manual Building
- 
+```
  ./build.sh; ssh dokku@dokku.me storage:mount test /tmp:/b
- ./build.sh; ssh dokku@dokku.me 
-
+ ./build.sh; ssh dokku@dokku.me
+```
 ### Integration tests
-
+```
 ./integration-test.sh
-
+```
 
 
 ### Running Tests against dokku-alt
-
+```
 USE_DOKKU_ALT=1 vagrant up
 
 cat ~/.ssh/id_rsa.pub | ssh -i .vagrant/machines/default/virtualbox/private_key vagrant@dokku.me sudo dokku access:add
 
 ssh dokku@dokku.me help
-
+```
 # !! add your key to /root/.ssh/authorized_keys
-
+```
 ./build.sh
 scp -r -i .vagrant/machines/default/virtualbox/private_key bin-build/* vagrant@dokku.me:/var/lib/dokku-alt/plugins/dokku-enterprise
 ./integration-test.sh
+```
