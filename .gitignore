@@ -30,3 +30,6 @@ bin-build/*
 !bin-build/config.json
 
 vendor
+
+# IDE
+.idea
