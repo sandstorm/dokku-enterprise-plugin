@@ -16,7 +16,23 @@ NOTE: All manually-placed files in `/home/dokku/$APP/nginx.conf.d/` will be remo
 
 Implementation note: This is realized using the `nginx-pre-reload` hook.
 
+### Planned Features
 
+#### Cloud Backup of dokku Instances
+
+The complete instance can be exported to and imported from the cloud by extracting its essential parts:
+- **Manifest**: Description of the instance environment (configuration of app, environment variables, persistent volumes, databases)
+- **Application Code**: Application logic of the instance
+- **Application Data**: Content of databases and persistent volumes
+
+(todo: names to be discussed)
+
+To cater different use cases, it will be possible to export/import only parts of an instance (e.g. only its Manifest, or Manifest + Application Code).
+
+#### Management of dokku Instances
+
+- Automatic backup of running instances
+- Provisioning of fallback instances when primary instances fail
 
 ## Developing
 
