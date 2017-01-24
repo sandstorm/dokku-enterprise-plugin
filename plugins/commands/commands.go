@@ -15,6 +15,7 @@ import (
 	"github.com/graymeta/stow"
 	"path/filepath"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/persistentData"
+	"github.com/mholt/archiver"
 )
 
 // http://dokku.viewdocs.io/dokku/development/plugin-creation/
@@ -47,6 +48,7 @@ func main() {
 
 		manifestFilePath := filePathAndBaseName + "-manifest.json"
 		persistentDataFilePath := filePathAndBaseName + "-persistent-data.tar.gz"
+		codeFilePath := filePathAndBaseName + "-code.tar.gz"
 
 		// Cloud Connect
 		log.Print("DEBUG: Uploading to cloud storage...")
@@ -72,6 +74,22 @@ func main() {
 		// PERSISTENT DATA
 		persistentData.CreatePersistentData(manifestWrapper, exportTempDir, persistentDataFilePath)
 		encryptedPathAndFilename = encryptFile(persistentDataFilePath)
+		uploadFile(encryptedPathAndFilename, container)
+
+		// GIT
+		err = archiver.TarGz.Make(codeFilePath, []string{
+			"/home/dokku/" + application + "/config",
+			"/home/dokku/" + application + "/branches",
+			"/home/dokku/" + application + "/description",
+			"/home/dokku/" + application + "/hooks",
+			"/home/dokku/" + application + "/info",
+			"/home/dokku/" + application + "/objects",
+			"/home/dokku/" + application + "/refs",
+		})
+		if err != nil {
+			log.Fatalf("ERROR: could create tar.gz file, error was: %v", err)
+		}
+		encryptedPathAndFilename = encryptFile(codeFilePath)
 		uploadFile(encryptedPathAndFilename, container)
 
 	case "collectMetrics":
