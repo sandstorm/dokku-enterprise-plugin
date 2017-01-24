@@ -4,6 +4,8 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"fmt"
 	"regexp"
+	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/DATA-DOG/godog"
 )
 
 func anEmptyFolderExists(folder string) error {
@@ -25,4 +27,13 @@ func iExpectAFileInFolder(filePattern, folder string) error {
 		return fmt.Errorf("pattern not found. Files: %v", result)
 	}
 	return nil
+}
+
+
+func iExpectAFileWithContents(arg1 string, arg2 *gherkin.DocString) error {
+	return godog.ErrPending
+}
+
+func aFileIsCreatedWithContents(arg1 string, arg2 *gherkin.DocString) error {
+	return godog.ErrPending
 }
