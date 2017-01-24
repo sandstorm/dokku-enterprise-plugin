@@ -12,6 +12,7 @@ else
       vm.vm.synced_folder File.expand_path('../bin-build', __FILE__), "/var/lib/dokku/plugins/available/dokku-enterprise"
       vm.vm.provision :shell do |s|
         s.inline = <<-EOT
+          sudo dokku plugin:install https://github.com/dokku/dokku-mariadb.git mariadb
           sudo dokku plugin:enable dokku-enterprise
           apt-get install nginx-extras -y
         EOT
