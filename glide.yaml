@@ -20,9 +20,6 @@ import:
 - package: github.com/ulikunitz/xz
   version: ~0.5.2
 testImport:
-- package: github.com/DATA-DOG/godog
-  subpackages:
-  - gherkin
 - package: github.com/elgs/gojq
   subpackages:
   - github.com/elgs/gosplitargs
