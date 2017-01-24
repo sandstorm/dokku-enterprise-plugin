@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"github.com/DATA-DOG/godog/gherkin"
-	"github.com/DATA-DOG/godog"
 )
 
 func anEmptyFolderExists(folder string) error {
@@ -30,10 +29,18 @@ func iExpectAFileInFolder(filePattern, folder string) error {
 }
 
 
-func iExpectAFileWithContents(arg1 string, arg2 *gherkin.DocString) error {
-	return godog.ErrPending
+func iExpectAFileWithContents(file string, content *gherkin.DocString) error {
+	result := utility.ExecCommand("ssh", "root@dokku.me", "cat", file)
+
+	if result != content.Content {
+		return fmt.Errorf("Invalid content: %s", result)
+	}
+
+	return nil
 }
 
-func aFileIsCreatedWithContents(arg1 string, arg2 *gherkin.DocString) error {
-	return godog.ErrPending
+func aFileIsCreatedWithContents(file string, content *gherkin.DocString) error {
+	createFileWithContentCommand := fmt.Sprintf("echo %s > %s", content.Content, file)
+	utility.ExecCommand("ssh", "root@dokku.me", createFileWithContentCommand)
+	return nil
 }
