@@ -2,13 +2,33 @@ package main
 
 import (
 	"github.com/DATA-DOG/godog/gherkin"
-	"github.com/DATA-DOG/godog"
+	"github.com/sandstorm/dokku-enterprise-plugin/behavioral-tests/dokkuDatabaseHelper"
+	"fmt"
+	"strings"
 )
 
-func iExecuteTheFollowingSQLStatementsOnDatabase(arg1 string, arg2 *gherkin.DocString) error {
-	return godog.ErrPending
+func iExecuteTheFollowingSQLStatementsOnDatabase(databaseName string, queryString *gherkin.DocString) error {
+	queries := strings.Split(queryString.Content, ";")
+
+	for _, query := range queries {
+		if len(strings.TrimSpace(query)) > 0 {
+			_, err := dokkuDatabaseHelper.Execute(databaseName, query)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
-func theSQLStatementOnDatabaseMustReturn(arg1, arg2, arg3 string) error {
-	return godog.ErrPending
+func theSQLStatementOnDatabaseMustReturn(query, databaseName, result string) error {
+	rows, err := dokkuDatabaseHelper.Query(databaseName, query)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(rows.Next())
+
+	return nil
 }

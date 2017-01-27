@@ -87,11 +87,10 @@ func main() {
 			"/home/dokku/" + application + "/refs",
 		})
 		if err != nil {
-			log.Fatalf("ERROR: could create tar.gz file, error was: %v", err)
+			log.Fatalf("ERROR: could not create tar.gz file, error was: %v", err)
 		}
 		encryptedPathAndFilename = encryptFile(codeFilePath)
 		uploadFile(encryptedPathAndFilename, container)
-
 	case "collectMetrics":
 		applicationLifecycleLogging.TryToSendToServer()
 		fmt.Println("Collect Metrics Done.")
