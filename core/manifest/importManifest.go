@@ -5,6 +5,7 @@ import (
 	"strings"
 	"fmt"
 	"encoding/json"
+	"log"
 )
 
 func ImportManifest(application string, manifestAsString string) {
@@ -16,14 +17,7 @@ func ImportManifest(application string, manifestAsString string) {
 		return
 	}
 
-	var manifestWrapper ManifestWrapper
-
-	err := json.Unmarshal([]byte(manifestAsString), &manifestWrapper)
-
-	if err != nil {
-		fmt.Printf("ERROR: JSON could not be parsed: %v", err)
-		return
-	}
+	manifestWrapper := DeserializeManifest([]byte(manifestAsString))
 
 	if len(manifestWrapper.Errors) > 0 {
 		fmt.Printf("ERROR: The manifest had errors; which means that the manifest is NOT fully self-contained and cannot be imported: \n  %v", manifestWrapper.Errors)
@@ -52,6 +46,18 @@ func ImportManifest(application string, manifestAsString string) {
 	for k, v := range manifestWrapper.Manifest.Config {
 		utility.ExecCommand("dokku", "config:set", application, k + "=" + replaceAppPlaceholder(v, application))
 	}
+}
+
+func DeserializeManifest(manifestAsBytes []byte) ManifestWrapper {
+	manifestWrapper := ManifestWrapper{}
+
+	err := json.Unmarshal(manifestAsBytes, &manifestWrapper)
+
+	if err != nil {
+		log.Fatal("ERROR: JSON could not be parsed")
+	}
+
+	return manifestWrapper
 }
 func replaceAppPlaceholder(s string, application string) string {
 	return strings.Replace(s, "[appName]", application, -1)
