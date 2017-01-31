@@ -11,8 +11,8 @@ Feature: I can export the Configuration Manifest to the cloud
 
     And I have an empty Dockerfile application
     And I call dokku "apps:destroy test --force"
-    And an empty folder "/temp/test" exists
-    And a file "/temp/test/storage.txt" is created with contents:
+    And an empty folder "/tmp/test" exists
+    And a file "/tmp/test/storage.txt" is created with contents:
     """
     Hallo Welt - we must survive!
     """
@@ -37,7 +37,7 @@ Feature: I can export the Configuration Manifest to the cloud
 
     Given I call dokku "mariadb:destroy copy42 --force"
     And an empty folder "/tmp/copy" exists
-    When I call dokku "cloud:createAppFromCloud copy <lastExportedCloudId>"
+    When I call dokku "cloud:createAppFromCloud copy test"
     Then I expect a file "/tmp/copy/storage.txt" with contents:
     """
     Hallo Welt - we must survive!
