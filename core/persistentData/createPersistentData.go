@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"github.com/mholt/archiver"
 	"log"
+	"path/filepath"
+	"fmt"
 )
 
 func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDir, persistentDataFilePath string) {
@@ -17,7 +19,7 @@ func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDi
 	// MARIADB
 	os.MkdirAll(persistentDataDir + "/mariadb", 0777);
 	for i, mariadbNameWithPlaceholder := range manifestWrapper.Manifest.Mariadb {
-		mariadbName := replacePlaceholder(mariadbNameWithPlaceholder, manifestWrapper)
+		mariadbName := replacePlaceholder(mariadbNameWithPlaceholder, manifestWrapper.AppName)
 		utility.ExecCommandAndDumpResultToFile(persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql", "dokku", "mariadb:export", mariadbName)
 	}
 
@@ -32,10 +34,10 @@ func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDi
 		if (option[0:3] == "-v ") {
 			volumeParts := strings.SplitN(option[3:], ":", 2)
 
-			targetDirectory := persistentDataDir + "/volume/" + volumeParts[0]
-			sourceDirectory := replacePlaceholder(volumeParts[0], manifestWrapper)
-			os.MkdirAll(targetDirectory, 0777)
-			utility.ExecCommandAndFailWithFatalErrorOnError("cp", "-R", sourceDirectory, targetDirectory)
+			targetDirectory := persistentDataDir + "/volume" + volumeParts[0]
+			sourceDirectory := replacePlaceholder(volumeParts[0], manifestWrapper.AppName)
+
+			copyDirectory(sourceDirectory, targetDirectory)
 		}
 	}
 
@@ -45,11 +47,6 @@ func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDi
 		log.Fatalf("ERROR: could create tar.gz file, error was: %v", err)
 	}
 }
-
-func replacePlaceholder(s string, wrapper manifest.ManifestWrapper) string {
-	return strings.Replace(s, "[appName]", wrapper.AppName, -1)
-}
-
 func removeDuplicates(xs *[]string) {
 	found := make(map[string]bool)
 	j := 0
@@ -61,4 +58,61 @@ func removeDuplicates(xs *[]string) {
 		}
 	}
 	*xs = (*xs)[:j]
+}
+
+func ImportPersistentData(applicationName string, manifestWrapper manifest.ManifestWrapper, persistentDataFilePath, importTempDir string) {
+	persistentDataDir := importTempDir + "/persistent-data"
+
+	// Extracting tar.gz
+	err := archiver.TarGz.Open(persistentDataFilePath, importTempDir)
+	if err != nil {
+		log.Fatalf("ERROR: could extract tar.gz file, error was: %v", err)
+	}
+
+	// MARIADB
+	for i, mariadbNameWithPlaceholder := range manifestWrapper.Manifest.Mariadb {
+		mariadbName := replacePlaceholder(mariadbNameWithPlaceholder, applicationName)
+
+		fmt.Printf("Importing database %s from %s", mariadbName, persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql")
+
+		utility.ExecCommand("dokku", "mariadb:import", mariadbName, "< " + persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql")
+	}
+
+	// VOLUME
+	allDockerOptions := make([]string, 0, 20)
+	allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Build...)
+	allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Deploy...)
+	allDockerOptions = append(allDockerOptions, manifestWrapper.Manifest.DockerOptions.Run...)
+	removeDuplicates(&allDockerOptions)
+	for _, option := range allDockerOptions {
+		if (option[0:3] == "-v ") {
+			volumeParts := strings.SplitN(option[3:], ":", 2)
+
+			sourceDirectory := persistentDataDir + "/volume" + volumeParts[0]
+			targetDirectory := replacePlaceholder(volumeParts[0], applicationName)
+
+			copyDirectory(sourceDirectory, targetDirectory)
+		}
+	}
+
+}
+
+func replacePlaceholder(content, applicationName string) string {
+	return strings.Replace(content, "[appName]", applicationName, -1)
+}
+
+func copyDirectory(source, target string) {
+	source = filepath.Clean(source)
+	target = filepath.Clean(target)
+
+	os.MkdirAll(filepath.Dir(target), 0777)
+
+	// we have to make sure that target does not exist
+	// -> otherwise the complete source folder will be copied into target (instead of only its contents)
+	err := os.RemoveAll(target)
+	if err != nil {
+		fmt.Errorf("Could not remove persistent-data-folder %s. Error was: %v", target, err)
+	}
+
+	utility.ExecCommandAndFailWithFatalErrorOnError("cp", "-R", source, target)
 }
