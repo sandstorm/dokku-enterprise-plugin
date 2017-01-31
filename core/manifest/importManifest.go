@@ -4,8 +4,6 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"strings"
 	"fmt"
-	"encoding/json"
-	"log"
 )
 
 func ImportManifest(application string, manifestAsString string) {
@@ -27,40 +25,25 @@ func ImportManifest(application string, manifestAsString string) {
 	utility.ExecCommand("dokku", "apps:create", application)
 
 	for _, databaseName := range manifestWrapper.Manifest.Mariadb {
-		utility.ExecCommand("dokku", "mariadb:create", replaceAppPlaceholder(databaseName, application))
-		utility.ExecCommand("dokku", "mariadb:link", replaceAppPlaceholder(databaseName, application), application)
+		utility.ExecCommand("dokku", "mariadb:create", ReplaceAppNamePlaceholder(databaseName, application))
+		utility.ExecCommand("dokku", "mariadb:link", ReplaceAppNamePlaceholder(databaseName, application), application)
 	}
 
 	for _, option := range manifestWrapper.Manifest.DockerOptions.Deploy {
-		utility.ExecCommand("dokku", "docker-options:add", application, "deploy", replaceAppPlaceholder(option, application))
+		utility.ExecCommand("dokku", "docker-options:add", application, "deploy", ReplaceAppNamePlaceholder(option, application))
 	}
 
 	for _, option := range manifestWrapper.Manifest.DockerOptions.Run {
-		utility.ExecCommand("dokku", "docker-options:add", application, "run", replaceAppPlaceholder(option, application))
+		utility.ExecCommand("dokku", "docker-options:add", application, "run", ReplaceAppNamePlaceholder(option, application))
 	}
 
 	for _, option := range manifestWrapper.Manifest.DockerOptions.Build {
-		utility.ExecCommand("dokku", "docker-options:add", application, "build", replaceAppPlaceholder(option, application))
+		utility.ExecCommand("dokku", "docker-options:add", application, "build", ReplaceAppNamePlaceholder(option, application))
 	}
 
 	for k, v := range manifestWrapper.Manifest.Config {
-		utility.ExecCommand("dokku", "config:set", application, k + "=" + replaceAppPlaceholder(v, application))
+		utility.ExecCommand("dokku", "config:set", application, k + "=" + ReplaceAppNamePlaceholder(v, application))
 	}
-}
-
-func DeserializeManifest(manifestAsBytes []byte) ManifestWrapper {
-	manifestWrapper := ManifestWrapper{}
-
-	err := json.Unmarshal(manifestAsBytes, &manifestWrapper)
-
-	if err != nil {
-		log.Fatal("ERROR: JSON could not be parsed")
-	}
-
-	return manifestWrapper
-}
-func replaceAppPlaceholder(s string, application string) string {
-	return strings.Replace(s, "[appName]", application, -1)
 }
 
 func stringInSlice(a string, list []string) bool {

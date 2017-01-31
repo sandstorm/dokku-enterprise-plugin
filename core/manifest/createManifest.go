@@ -55,16 +55,6 @@ func CreateManifest(application string) ManifestWrapper {
 
 }
 
-func SerializeManifest(manifestWrapper ManifestWrapper) []byte {
-	manifestAsBytes, err := json.MarshalIndent(manifestWrapper, "", "  ")
-
-	if err != nil {
-		log.Fatalf("There was an error serializing JSON manifest: %v", err)
-	}
-
-	return manifestAsBytes
-}
-
 /************************
  EXTRACTORS
  */
@@ -120,7 +110,7 @@ func extractDockerOptions(manifestWrapper *ManifestWrapper, phase string) {
  HELPERS
  */
 func replaceApplicationNameInString(s string, manifestWrapper *ManifestWrapper, key string, addErrorOnlyIfStringStartsWith string) string {
-	r := strings.Replace(s, manifestWrapper.AppName, "[appName]", -1)
+	r := ReplaceAppNamePlaceholder(s, manifestWrapper.AppName)
 
 	if !strings.Contains(r, "[appName]") && strings.HasPrefix(s, addErrorOnlyIfStringStartsWith) {
 		manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("%v: did not find application name '%v' inside string: %v.", key, manifestWrapper.AppName, s))
