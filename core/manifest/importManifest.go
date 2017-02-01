@@ -4,6 +4,7 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"fmt"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/dokku"
+	"strings"
 )
 
 func ImportManifest(application, manifestAsString string) {
@@ -46,6 +47,19 @@ func ValidateImportManifest(application, manifestAsString string) (warnings []st
 		databaseName := ReplacePlaceholderWithAppName(databaseNameWithPlaceholder, application)
 		if dokku.HasMariaDBWithName(databaseName) {
 			warnings = append(warnings, fmt.Sprintf("Database '%v' exists already!", databaseName))
+		}
+	}
+
+	allDockerOptions := manifestWrapper.GetDockerOptions()
+	for _, option := range allDockerOptions {
+		if (option[0:3] == "-v ") {
+			volumeParts := strings.SplitN(option[3:], ":", 2)
+
+			targetDirectory := ReplacePlaceholderWithAppName(volumeParts[0], application)
+
+			if utility.FileExists(targetDirectory) && !utility.DirectoryIsEmpty(targetDirectory) {
+				warnings = append(warnings, fmt.Sprintf("Persistent volume '%s' exists already!", targetDirectory))
+			}
 		}
 	}
 

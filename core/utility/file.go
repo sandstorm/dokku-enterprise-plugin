@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"os"
 	"fmt"
+	"io"
 )
 
 // Copies all files from source to target directory
@@ -22,4 +23,28 @@ func CopyAndOverrideDirectory(source, target string) {
 	}
 
 	ExecCommandAndFailWithFatalErrorOnError("cp", "-R", source, target)
+}
+
+func FileExists(filepath string) bool {
+	_, err := os.Stat(filepath)
+
+	if err == nil {
+		return true
+	}
+
+	return ! os.IsNotExist(err)
+}
+
+func DirectoryIsEmpty(filepath string) bool {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true
+	}
+	return false
 }

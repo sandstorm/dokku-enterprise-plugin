@@ -12,6 +12,7 @@ import (
 	"strings"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/manifest"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/persistentData"
+	"fmt"
 )
 
 func CreateAppFromCloud(application, applicationTemplate string) {
@@ -48,6 +49,15 @@ func CreateAppFromCloud(application, applicationTemplate string) {
 	if err != nil {
 		log.Fatalf("ERROR: could not read local manifest file, error was: %v", err)
 	}
+	manifestWrapper := manifest.DeserializeManifest(manifestAsBytes)
+
+	log.Print("INFO: Validating manifest..")
+	validationErrors := manifest.ValidateImportManifest(application, string(manifestAsBytes))
+	if len(validationErrors) > 0 {
+		utility.LogCouldNotExecuteCommand(validationErrors)
+		return
+	}
+	log.Print("INFO: Manifest is valid. Starting to import..")
 
 	manifest.ImportManifest(application, string(manifestAsBytes))
 	log.Print("INFO: Manifest imported successfully.")
@@ -57,8 +67,8 @@ func CreateAppFromCloud(application, applicationTemplate string) {
 	persistentDataEncryptedLocalFilePath := downloadFile(persistentDataEncryptedFilename, importTempDir, container)
 	persistentDataLocalFilePath := decryptFile(persistentDataEncryptedLocalFilePath)
 
-	persistentData.ImportPersistentData(application, manifest.DeserializeManifest(manifestAsBytes), persistentDataLocalFilePath, importTempDir)
-	log.Print("INFO: Persistent data imported successfully.")
+	persistentData.ImportPersistentData(application, manifestWrapper, persistentDataLocalFilePath, importTempDir)
+	log.Print("INFO: Persistent data successfully imported.")
 
 	// GIT
 	codeEncryptedFilename := fileBasename + "-code.tar.gz.gpg"
@@ -69,6 +79,9 @@ func CreateAppFromCloud(application, applicationTemplate string) {
 	if err != nil {
 		log.Fatalf("ERROR: could not extract code from tar.gz file, error was: %v", err)
 	}
+	log.Print("INFO: Code successfully imported.")
+
+	log.Printf("INFO: Successfully deployed app '%s'.", application)
 
 }
 func resolveFileBasename(applicationTemplate string, container stow.Container) string {
