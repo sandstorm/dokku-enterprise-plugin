@@ -34,4 +34,11 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^the API delivery http server is available at port (\d+) for at most (\d+) seconds and (\d+) request$`, theAPIDeliveryHttpServerIsAvailableAt)
 	s.Step(`^the API delivery http server always responds with status code (\d+)$`, theAPIDeliveryHttpServerAlwaysRespondsWithStatusCode)
 	s.Step(`^the API delivery http server received request (\d+) with the following JSON at "([^"]*)":$`, theAPIDeliveryHttpServerReceivedTheFollowingJSONAtEvent)
+
+
+	// todo: sort them into the respective category
+	s.Step(`^a file "([^"]*)" is created with contents:$`, aFileIsCreatedWithContents)
+	s.Step(`^I execute the following SQL statements on database "([^"]*)":$`, iExecuteTheFollowingSQLStatementsOnDatabase)
+	s.Step(`^I expect a file "([^"]*)" with contents:$`, iExpectAFileWithContents)
+	s.Step(`^the SQL statement "([^"]*)" on database "([^"]*)" must return "([^"]*)"$`, theSQLStatementOnDatabaseMustReturn)
 }
