@@ -2,12 +2,13 @@ package persistentData
 
 import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/manifest"
-	"fmt"
 	"strconv"
 	"github.com/mholt/archiver"
 	"log"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"strings"
+	"os"
+	"fmt"
 )
 
 func ImportPersistentData(applicationName string, manifestWrapper manifest.ManifestWrapper, persistentDataFilePath, importTempDir string) {
@@ -23,9 +24,14 @@ func ImportPersistentData(applicationName string, manifestWrapper manifest.Manif
 	for i, mariadbNameWithPlaceholder := range manifestWrapper.Manifest.Mariadb {
 		mariadbName := manifest.ReplacePlaceholderWithAppName(mariadbNameWithPlaceholder, applicationName)
 
-		fmt.Printf("Importing database %s from %s", mariadbName, persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql")
+		file, err := os.Open(persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql")
+		if err != nil {
+			log.Fatalf("ERROR: could not get file handler for database file, error was: %v", err)
+		}
 
-		utility.ExecCommand("dokku", "mariadb:import", mariadbName, "< " + persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql")
+		utility.ExecCommandWithStdIn(file,"dokku", "mariadb:import", mariadbName)
+
+		file.Close()
 	}
 
 	// VOLUME
