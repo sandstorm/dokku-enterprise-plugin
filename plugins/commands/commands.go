@@ -8,6 +8,7 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/manifest"
 	"io/ioutil"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/cloud"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 )
 
 // http://dokku.viewdocs.io/dokku/development/plugin-creation/
@@ -21,7 +22,16 @@ func main() {
 
 	case "manifest:import":
 		bytes, _ := ioutil.ReadAll(os.Stdin)
-		manifest.ImportManifest(os.Args[2], string(bytes))
+		manifestAsString := string(bytes)
+		applicationName := os.Args[2]
+
+		validationErrors := manifest.ValidateImportManifest(applicationName, manifestAsString)
+		if len(validationErrors) > 0 {
+			utility.LogCouldNotExecuteCommand(validationErrors)
+			return
+		}
+
+		manifest.ImportManifest(applicationName, manifestAsString)
 
 	case "cloud:backup":
 		application := os.Args[2]

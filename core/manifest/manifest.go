@@ -26,8 +26,14 @@ type dockerOptions struct {
 	Run    []string     `json:"run,omitempty"`
 }
 
-func ReplaceAppNamePlaceholder(input, applicationName string) string {
-	return strings.Replace(input, "[appName]", applicationName, -1)
+const applicationNamePlaceholder string = "[appName]"
+
+func ReplaceAppNameWithPlaceholder(input, applicationName string) string {
+	return strings.Replace(input, applicationName, applicationNamePlaceholder, -1)
+}
+
+func ReplacePlaceholderWithAppName(input, applicationName string) string {
+	return strings.Replace(input, applicationNamePlaceholder, applicationName, -1)
 }
 
 func SerializeManifest(manifestWrapper ManifestWrapper) []byte {

@@ -21,7 +21,7 @@ func ImportPersistentData(applicationName string, manifestWrapper manifest.Manif
 
 	// MARIADB
 	for i, mariadbNameWithPlaceholder := range manifestWrapper.Manifest.Mariadb {
-		mariadbName := manifest.ReplaceAppNamePlaceholder(mariadbNameWithPlaceholder, applicationName)
+		mariadbName := manifest.ReplacePlaceholderWithAppName(mariadbNameWithPlaceholder, applicationName)
 
 		fmt.Printf("Importing database %s from %s", mariadbName, persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql")
 
@@ -35,7 +35,7 @@ func ImportPersistentData(applicationName string, manifestWrapper manifest.Manif
 			volumeParts := strings.SplitN(option[3:], ":", 2)
 
 			sourceDirectory := persistentDataDir + "/volume" + volumeParts[0]
-			targetDirectory := manifest.ReplaceAppNamePlaceholder(volumeParts[0], applicationName)
+			targetDirectory := manifest.ReplacePlaceholderWithAppName(volumeParts[0], applicationName)
 
 			utility.CopyAndOverrideDirectory(sourceDirectory, targetDirectory)
 		}

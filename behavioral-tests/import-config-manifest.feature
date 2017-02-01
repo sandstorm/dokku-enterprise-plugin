@@ -11,7 +11,26 @@ Feature: I can import the Configuration Manifest
       }
     }
     """
-    Then I get back a message "ERROR: Application 'test' already exists!"
+    Then I get back a message "Application 'test' exists already!"
+
+  Scenario: Error when database already exists
+    Given I call dokku "apps:destroy test --force"
+    And I call dokku "mariadb:destroy testX --force"
+    And I call dokku "mariadb:destroy testfoo --force"
+    And I call dokku "mariadb:create testfoo"
+
+    When I call dokku "manifest:import test" with payload:
+    """
+    {
+      "manifest": {
+        "mariadb": [
+          "[appName]X",
+          "[appName]foo"
+        ]
+      }
+    }
+    """
+    Then I get back a message "Database 'testfoo' exists already!"
 
   Scenario: Error when manifest could not be parsed
     Given I call dokku "apps:destroy test --force"
@@ -36,9 +55,7 @@ Feature: I can import the Configuration Manifest
       ]
     }
     """
-    Then I get back a message "ERROR: The manifest had errors; which means that the manifest is NOT fully self-contained"
-    And I get back a message "Some error"
-
+    Then I get back a message "Some error"
 
   Scenario: Application is created from manifest
     Given I call dokku "apps:destroy testXXX --force"

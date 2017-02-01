@@ -17,7 +17,7 @@ func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDi
 	// MARIADB
 	os.MkdirAll(persistentDataDir + "/mariadb", 0777)
 	for i, mariadbNameWithPlaceholder := range manifestWrapper.Manifest.Mariadb {
-		mariadbName := manifest.ReplaceAppNamePlaceholder(mariadbNameWithPlaceholder, manifestWrapper.AppName)
+		mariadbName := manifest.ReplacePlaceholderWithAppName(mariadbNameWithPlaceholder, manifestWrapper.AppName)
 		utility.ExecCommandAndDumpResultToFile(persistentDataDir + "/mariadb/" + strconv.Itoa(i) + ".sql", "dokku", "mariadb:export", mariadbName)
 	}
 
@@ -29,7 +29,7 @@ func CreatePersistentData(manifestWrapper manifest.ManifestWrapper, exportTempDi
 			volumeParts := strings.SplitN(option[3:], ":", 2)
 
 			targetDirectory := persistentDataDir + "/volume" + volumeParts[0]
-			sourceDirectory := manifest.ReplaceAppNamePlaceholder(volumeParts[0], manifestWrapper.AppName)
+			sourceDirectory := manifest.ReplacePlaceholderWithAppName(volumeParts[0], manifestWrapper.AppName)
 
 			utility.CopyAndOverrideDirectory(sourceDirectory, targetDirectory)
 		}

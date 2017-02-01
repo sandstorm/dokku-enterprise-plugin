@@ -3,9 +3,7 @@ package manifest
 import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"strings"
-	"encoding/json"
 	"fmt"
-	"log"
 )
 
 func CreateManifest(application string) ManifestWrapper {
@@ -110,7 +108,7 @@ func extractDockerOptions(manifestWrapper *ManifestWrapper, phase string) {
  HELPERS
  */
 func replaceApplicationNameInString(s string, manifestWrapper *ManifestWrapper, key string, addErrorOnlyIfStringStartsWith string) string {
-	r := ReplaceAppNamePlaceholder(s, manifestWrapper.AppName)
+	r := ReplaceAppNameWithPlaceholder(s, manifestWrapper.AppName)
 
 	if !strings.Contains(r, "[appName]") && strings.HasPrefix(s, addErrorOnlyIfStringStartsWith) {
 		manifestWrapper.Errors = append(manifestWrapper.Errors, fmt.Sprintf("%v: did not find application name '%v' inside string: %v.", key, manifestWrapper.AppName, s))
