@@ -2,66 +2,66 @@ package manifest
 
 import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
-	"strings"
 	"fmt"
-	"encoding/json"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/dokku"
+	"strings"
 )
 
-func ImportManifest(application string, manifestAsString string) {
-	allAppsAsString := utility.ExecCommand("dokku", "--quiet", "apps", application)
-	allApps := strings.Split(allAppsAsString, "\n")
-
-	if stringInSlice(application, allApps) {
-		fmt.Printf("ERROR: Application '%v' already exists!\n", application)
-		return
-	}
-
-	var manifestWrapper ManifestWrapper
-
-	err := json.Unmarshal([]byte(manifestAsString), &manifestWrapper)
-
-	if err != nil {
-		fmt.Printf("ERROR: JSON could not be parsed: %v", err)
-		return
-	}
-
-	if len(manifestWrapper.Errors) > 0 {
-		fmt.Printf("ERROR: The manifest had errors; which means that the manifest is NOT fully self-contained and cannot be imported: \n  %v", manifestWrapper.Errors)
-		return
-	}
+func ImportManifest(application, manifestAsString string) {
+	manifestWrapper := DeserializeManifest([]byte(manifestAsString))
 
 	utility.ExecCommand("dokku", "apps:create", application)
 
-	for _, databaseName := range manifestWrapper.Manifest.Mariadb {
-		utility.ExecCommand("dokku", "mariadb:create", replaceAppPlaceholder(databaseName, application))
-		utility.ExecCommand("dokku", "mariadb:link", replaceAppPlaceholder(databaseName, application), application)
+	for _, databaseNameWithPlaceholder := range manifestWrapper.Manifest.Mariadb {
+		databaseName := ReplacePlaceholderWithAppName(databaseNameWithPlaceholder, application)
+		utility.ExecCommand("dokku", "mariadb:create", ReplacePlaceholderWithAppName(databaseName, application))
+		utility.ExecCommand("dokku", "mariadb:link", ReplacePlaceholderWithAppName(databaseName, application), application)
 	}
 
 	for _, option := range manifestWrapper.Manifest.DockerOptions.Deploy {
-		utility.ExecCommand("dokku", "docker-options:add", application, "deploy", replaceAppPlaceholder(option, application))
+		utility.ExecCommand("dokku", "docker-options:add", application, "deploy", ReplacePlaceholderWithAppName(option, application))
 	}
 
 	for _, option := range manifestWrapper.Manifest.DockerOptions.Run {
-		utility.ExecCommand("dokku", "docker-options:add", application, "run", replaceAppPlaceholder(option, application))
+		utility.ExecCommand("dokku", "docker-options:add", application, "run", ReplacePlaceholderWithAppName(option, application))
 	}
 
 	for _, option := range manifestWrapper.Manifest.DockerOptions.Build {
-		utility.ExecCommand("dokku", "docker-options:add", application, "build", replaceAppPlaceholder(option, application))
+		utility.ExecCommand("dokku", "docker-options:add", application, "build", ReplacePlaceholderWithAppName(option, application))
 	}
 
 	for k, v := range manifestWrapper.Manifest.Config {
-		utility.ExecCommand("dokku", "config:set", application, k + "=" + replaceAppPlaceholder(v, application))
+		utility.ExecCommand("dokku", "config:set", application, k + "=" + ReplacePlaceholderWithAppName(v, application))
 	}
-}
-func replaceAppPlaceholder(s string, application string) string {
-	return strings.Replace(s, "[appName]", application, -1)
 }
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
+func ValidateImportManifest(application, manifestAsString string) (warnings []string) {
+	if dokku.HasAppWithName(application) {
+		warnings = append(warnings, fmt.Sprintf("Application '%v' exists already!", application))
+	}
+
+	manifestWrapper := DeserializeManifest([]byte(manifestAsString))
+	warnings = append(warnings, manifestWrapper.Errors...)
+
+	for _, databaseNameWithPlaceholder := range manifestWrapper.Manifest.Mariadb {
+		databaseName := ReplacePlaceholderWithAppName(databaseNameWithPlaceholder, application)
+		if dokku.HasMariaDBWithName(databaseName) {
+			warnings = append(warnings, fmt.Sprintf("Database '%v' exists already!", databaseName))
 		}
 	}
-	return false
+
+	allDockerOptions := manifestWrapper.GetDockerOptions()
+	for _, option := range allDockerOptions {
+		if (option[0:3] == "-v ") {
+			volumeParts := strings.SplitN(option[3:], ":", 2)
+
+			targetDirectory := ReplacePlaceholderWithAppName(volumeParts[0], application)
+
+			if utility.FileExists(targetDirectory) && !utility.DirectoryIsEmpty(targetDirectory) {
+				warnings = append(warnings, fmt.Sprintf("Persistent volume '%s' exists already!", targetDirectory))
+			}
+		}
+	}
+
+	return
 }

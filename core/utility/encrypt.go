@@ -2,7 +2,6 @@ package utility
 
 import (
 	"code.google.com/p/go.crypto/openpgp"
-	"bytes"
 	"code.google.com/p/go.crypto/openpgp/armor"
 	"log"
 	"io/ioutil"
@@ -31,9 +30,8 @@ func Encrypt(textToEncrypt io.Reader, writerForOutput io.Writer) {
 	w.Close()
 }
 
-func Decrypt(ciphertext []byte) []byte {
-	decbuf := bytes.NewBuffer(ciphertext)
-	result, err := armor.Decode(decbuf)
+func Decrypt(textToDecrypt io.Reader, writerForOutput io.Writer) {
+	result, err := armor.Decode(textToDecrypt)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,5 +47,9 @@ func Decrypt(ciphertext []byte) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return bytes
+
+	_, err = writerForOutput.Write(bytes)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

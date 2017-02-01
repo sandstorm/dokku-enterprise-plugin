@@ -10,7 +10,8 @@ import (
 func anEmptyFolderExists(folder string) error {
 	utility.ExecCommand("ssh", "root@dokku.me", "rm", "-Rf", folder)
 	utility.ExecCommand("ssh", "root@dokku.me", "mkdir", "-p", folder)
-	utility.ExecCommand("ssh", "root@dokku.me", "chmod", "-R", "777", folder)
+	utility.ExecCommand("ssh", "root@dokku.me", "chmod", "-R", "755", folder)
+	utility.ExecCommand("ssh", "root@dokku.me", "chown", "dokku:dokku", folder)
 	return nil
 }
 

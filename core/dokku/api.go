@@ -20,3 +20,17 @@ func GetAppContainerId(app string) string {
 		return ""
 	}
 }
+
+func HasAppWithName(applicationName string) bool {
+	allAppsAsString := utility.ExecCommand("dokku", "--quiet", "apps")
+	allApps := strings.Split(allAppsAsString, "\n")
+
+	return utility.ContainsString(applicationName, allApps)
+}
+
+func HasMariaDBWithName(databaseName string) bool {
+	allMariaDBsAsString := utility.ExecCommand("dokku", "--quiet", "mariadb:list", )
+	allMariaDBs := strings.Split(allMariaDBsAsString, "\n")[1:] // ignoring the first entry which is the header
+
+	return utility.ContainsStringStartingWith(databaseName, allMariaDBs)
+}
