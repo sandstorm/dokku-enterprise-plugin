@@ -12,7 +12,6 @@ import (
 	"strings"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/manifest"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/persistentData"
-	"fmt"
 )
 
 func CreateAppFromCloud(application, applicationTemplate string) {
