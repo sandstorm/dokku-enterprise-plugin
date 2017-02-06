@@ -8,7 +8,6 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
 	"strings"
 	"os"
-	"fmt"
 )
 
 func ImportPersistentData(applicationName string, manifestWrapper manifest.ManifestWrapper, persistentDataFilePath, importTempDir string) {
