@@ -13,6 +13,7 @@ else
       vm.vm.provision :shell do |s|
         s.inline = <<-EOT
           sudo dokku plugin:install https://github.com/dokku/dokku-mariadb.git mariadb
+          sudo chown dokku:dokku /var/lib/dokku
           sudo dokku plugin:enable dokku-enterprise
           apt-get install nginx-extras -y
         EOT
