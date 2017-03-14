@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 )
 
-var configurationCache configuration = configuration{
+var configurationCache configuration = configuration {
 	ApiEndpointUrl: "",
 }
 

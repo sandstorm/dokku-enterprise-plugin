@@ -6,13 +6,11 @@ import (
 	"time"
 	"fmt"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/dokku"
-	"github.com/sandstorm/dokku-enterprise-plugin/core/configuration"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/manifest"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/persistentData"
+	"github.com/sandstorm/dokku-enterprise-plugin/core/cloudStorage"
 	"log"
 	"github.com/sandstorm/dokku-enterprise-plugin/core/utility"
-	"github.com/graymeta/stow"
-	"path/filepath"
 	"github.com/mholt/archiver"
 )
 
@@ -35,31 +33,19 @@ func Backup(application string) {
 	persistentDataFilePath := filePathAndBaseName + "-persistent-data.tar.gz"
 	codeFilePath := filePathAndBaseName + "-code.tar.gz"
 
-	// Cloud Connect
-	log.Print("DEBUG: Uploading to cloud storage...")
-	location, err := configuration.Get().CloudBackup.ConnectToStorage()
-	if err != nil {
-		log.Fatalf("ERROR: could not connect to Cloud Storage, error was: %v", err)
-	}
-
-	container, err := location.Container(configuration.Get().CloudBackup.StorageBucket)
-	if err != nil {
-		log.Fatalf("ERROR: did not find storage bucket '%s': %v", configuration.Get().CloudBackup.StorageBucket, err)
-	}
-
 	// MANIFEST
 	manifestWrapper := manifest.CreateManifest(application)
 	manifestBytes := manifest.SerializeManifest(manifestWrapper)
 	err = ioutil.WriteFile(manifestFilePath, manifestBytes, 0755)
 	log.Printf("INFO: Manifest created. Manifest is: \n%s", string(manifestBytes))
 
-	encryptedPathAndFilename := encryptFile(manifestFilePath)
-	uploadFile(encryptedPathAndFilename, container)
+	encryptedPathAndFilename := utility.EncryptFile(manifestFilePath)
+	cloudStorage.UploadFile(encryptedPathAndFilename)
 
 	// PERSISTENT DATA
 	persistentData.CreatePersistentData(manifestWrapper, exportTempDir, persistentDataFilePath)
-	encryptedPathAndFilename = encryptFile(persistentDataFilePath)
-	uploadFile(encryptedPathAndFilename, container)
+	encryptedPathAndFilename = utility.EncryptFile(persistentDataFilePath)
+	cloudStorage.UploadFile(encryptedPathAndFilename)
 
 	// GIT
 	err = archiver.TarGz.Make(codeFilePath, []string{
@@ -74,39 +60,6 @@ func Backup(application string) {
 	if err != nil {
 		log.Fatalf("ERROR: could not create tar.gz file, error was: %v", err)
 	}
-	encryptedPathAndFilename = encryptFile(codeFilePath)
-	uploadFile(encryptedPathAndFilename, container)
-}
-func encryptFile(unencryptedPathAndFilename string) string {
-	encryptedPathAndFilename := unencryptedPathAndFilename + ".gpg"
-	gpgFile, err := os.Create(encryptedPathAndFilename)
-	if err != nil {
-		log.Fatalf("ERROR: %s could not be created, error was: %v", encryptedPathAndFilename, err)
-	}
-
-	sourceFile, err := os.Open(unencryptedPathAndFilename)
-	if err != nil {
-		log.Fatalf("ERROR: %s could not be opened, error was: %v", unencryptedPathAndFilename, err)
-	}
-	defer sourceFile.Close()
-
-	log.Printf("DEBUG: encrypting %s", unencryptedPathAndFilename)
-	utility.Encrypt(sourceFile, gpgFile)
-	gpgFile.Close()
-	return encryptedPathAndFilename
-}
-func uploadFile(pathAndFilename string, container stow.Container) {
-	file, err := os.Open(pathAndFilename)
-	if err != nil {
-		log.Fatalf("ERROR: %s could not be read, error was: %v", pathAndFilename, err)
-	}
-	fileInfo, err := file.Stat()
-	if err != nil {
-		log.Fatalf("ERROR: file size for %s could not be read, error was: %v", pathAndFilename, err)
-	}
-
-	_, err = container.Put(filepath.Base(pathAndFilename), file, fileInfo.Size(), nil)
-	if err != nil {
-		log.Fatalf("ERROR: %s could not be uploaded, error was: %v", filepath.Base(pathAndFilename), err)
-	}
+	encryptedPathAndFilename = utility.EncryptFile(codeFilePath)
+	cloudStorage.UploadFile(encryptedPathAndFilename)
 }
