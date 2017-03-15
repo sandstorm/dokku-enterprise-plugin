@@ -13,7 +13,6 @@ var container stow.Container
 
 func getContainer() stow.Container {
 	if container == nil {
-		log.Print("DEBUG: Connecting to cloud storage...")
 		location, err := configuration.Get().CloudBackup.ConnectToStorage()
 		if err != nil {
 			log.Fatalf("ERROR: could not connect to Cloud Storage, error was: %v", err)

@@ -20,6 +20,7 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^the response should not contain "([^"]*)"$`, theResponseShouldNotContain)
 	s.Step(`^I get back a JSON object with the following structure:$`, iGetBackAJSONObjectWithTheFollowingStructure)
 	s.Step(`^I get back a message "([^"]*)"$`, iGetBackAMessage)
+	s.Step(`^I get back a table with content:$`, iGetBackATableWithContent)
 
 	// steps_eventLog_test
 	s.Step(`^the event log is empty$`, theEventLogIsEmpty)

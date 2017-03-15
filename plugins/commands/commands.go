@@ -33,6 +33,9 @@ func main() {
 
 		manifest.ImportManifest(applicationName, manifestAsString)
 
+	case "cloud:list":
+		cloud.List()
+
 	case "cloud:backup":
 		application := os.Args[2]
 		cloud.Backup(application)

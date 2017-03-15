@@ -23,12 +23,14 @@ func iExecuteTheFollowingSQLStatementsOnDatabase(databaseName string, queryStrin
 }
 
 func theSQLStatementOnDatabaseMustReturn(query, databaseName, result string) error {
-	rows, err := dokkuDatabaseHelper.Query(databaseName, query)
+	queryResult, err := dokkuDatabaseHelper.QueryString(databaseName, query)
 	if err != nil {
 		return err
 	}
 
-	fmt.Print(rows.Next())
+	if queryResult != result {
+		return fmt.Errorf("Expected query result is not equal to actual result: %v", queryResult)
+	}
 
 	return nil
 }

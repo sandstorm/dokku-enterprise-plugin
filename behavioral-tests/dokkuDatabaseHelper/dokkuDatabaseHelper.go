@@ -24,21 +24,31 @@ func Execute(databaseName, query string) (sql.Result, error) {
 	return res, nil
 }
 
-func Query(databaseName, query string) (*sql.Rows, error) {
+func QueryString(databaseName, query string) (string, error) {
 	db, err := initializeDatabase(databaseName)
 	if err != nil {
-		return nil, fmt.Errorf("dokku: Could not create connection to database %s: %v", databaseName, err)
+		return "", fmt.Errorf("dokku: Could not create connection to database %s: %v", databaseName, err)
 	}
 	defer db.Close()
 
 	// Prepare statement for retrieving data
 	rows, err := db.Query(query)
 	if err != nil {
-		return nil, fmt.Errorf("dokku: Could not execute query on database %s: %v", databaseName, err)
+		return "", fmt.Errorf("dokku: Could not execute query on database %s: %v", databaseName, err)
 	}
 	defer rows.Close()
 
-	return rows, nil
+	var queryResult string
+	if rows.Next() {
+		err = rows.Scan(&queryResult)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		return "", fmt.Errorf("dokku: Query did not return any results for database %s", databaseName)
+	}
+
+	return queryResult, nil
 }
 
 func initializeDatabase(databaseName string) (*sql.DB, error) {

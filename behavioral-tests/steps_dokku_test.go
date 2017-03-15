@@ -13,6 +13,7 @@ import (
 	"strings"
 	"github.com/sandstorm/dokku-enterprise-plugin/behavioral-tests/jsonQueryHelper"
 	"bytes"
+	"regexp"
 )
 
 // Create a quite-minimal dokku Dockerfile application (as basis for testing)
@@ -112,6 +113,24 @@ func iGetBackAJSONObjectWithTheFollowingStructure(comparators *gherkin.DataTable
 func iGetBackAMessage(expected string) error {
 	if !strings.Contains(dokkuResponseBody, expected) {
 		return fmt.Errorf("Expected string '%v' not found in response body: %v", expected, dokkuResponseBody)
+	}
+
+	return nil
+}
+
+func iGetBackATableWithContent(expected *gherkin.DataTable) error {
+	rows, err := utility.ParseTable(dokkuResponseBody)
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(expected.Rows); i++ {
+		for j := 0; j < len(expected.Rows[i].Cells); j++ {
+			cellRegex := regexp.MustCompile(expected.Rows[i].Cells[j].Value)
+			if !cellRegex.MatchString(rows[i][j]) {
+				return fmt.Errorf("Expected table did not match actual:\n%v", dokkuResponseBody)
+			}
+		}
 	}
 
 	return nil
