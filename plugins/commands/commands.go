@@ -36,6 +36,10 @@ func main() {
 	case "cloud:list":
 		cloud.List()
 
+	case "cloud:info":
+		applicationName := os.Args[2]
+		cloud.Info(applicationName)
+
 	case "cloud:backup":
 		application := os.Args[2]
 		cloud.Backup(application)

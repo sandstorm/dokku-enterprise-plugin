@@ -10,17 +10,18 @@ import (
 
 type Application struct {
 	Name     string
-	Versions []version
+	Versions []Version
 }
 
-type version struct {
-	Identifier         string
-	WithPersistentData bool
-	WithCode           bool
+type Version struct {
+	Identifier	string
+	CodeSizeInKb	float64
+	DataSizeInKb    float64
 }
 
-func (app Application) GetLatestVersion() version {
-	return app.Versions[len(app.Versions)-1]
+func (version Version) GetDate() string {
+	datePattern := regexp.MustCompile(`.*__(.*?)__.*?`)
+	return datePattern.FindStringSubmatch(version.Identifier)[1]
 }
 
 const ITEM_LIMIT = 1000 // todo: should we support "batch processing" of items?
@@ -68,7 +69,7 @@ func retrieveItemsFromCloudStorage(prefix string) ([]stow.Item, error) {
 	return items, err
 }
 
-func convertItemsToVersions(items []stow.Item) (versions []version) {
+func convertItemsToVersions(items []stow.Item) (versions []Version) {
 	versionItemBuckets := mapItemsByVersion(items)
 
 	versionIdentifiers := make([]string, len(versionItemBuckets))
@@ -77,19 +78,34 @@ func convertItemsToVersions(items []stow.Item) (versions []version) {
 		versionIdentifiers[i] = k
 		i++
 	}
-	sort.Strings(versionIdentifiers)
+	sort.Sort(sort.Reverse(sort.StringSlice(versionIdentifiers)))
 
 	for i := 0; i < len(versionIdentifiers); i++ {
 		versionIdentifier := versionIdentifiers[i]
 		items := versionItemBuckets[versionIdentifier]
 
-		hasPersistentData := itemsContainItemWithSuffix(items, "-persistent-data.tar.gz.gpg")
-		hasCode := itemsContainItemWithSuffix(items, "-code.tar.gz.gpg")
+		codeFile := getItemWithSuffix(items, "-persistent-data.tar.gz.gpg")
+		var codeSizeInKb float64 = 0
+		if codeFile != nil {
+			size, err := codeFile.Size()
+			if err == nil {
+				codeSizeInKb = float64(size) / 1024
+			}
+		}
 
-		versions = append(versions, version{
+		dataFile := getItemWithSuffix(items, "-code.tar.gz.gpg")
+		var dataSizeInKb float64 = 0
+		if dataFile != nil {
+			size, err := dataFile.Size()
+			if err == nil {
+				dataSizeInKb = float64(size) / 1024
+			}
+		}
+
+		versions = append(versions, Version{
 			Identifier: versionIdentifier,
-			WithPersistentData: hasPersistentData,
-			WithCode: hasCode,
+			CodeSizeInKb: codeSizeInKb,
+			DataSizeInKb: dataSizeInKb,
 		})
 	}
 
@@ -123,21 +139,18 @@ func mapItemsByVersion(items []stow.Item) (itemsByVersion map[string][]stow.Item
 }
 func getApplicationName(item stow.Item) string {
 	// version-name pattern: <appName>__<date_time>__<ip>-<type>
-	versionPattern := regexp.MustCompile(`(.*)__.*?__.*?(-manifest\.json\.gpg|-persistent-data\.tar\.gz|-code\.tar\.gz)`)
-
-	return versionPattern.FindStringSubmatch(item.Name())[1]
+	applicationNamePattern := regexp.MustCompile(`(.*)__.*?__.*?(-manifest\.json\.gpg|-persistent-data\.tar\.gz|-code\.tar\.gz)`)
+	return applicationNamePattern.FindStringSubmatch(item.Name())[1]
 }
 func getVersionIdentifier(item stow.Item) string {
 	versionPattern := regexp.MustCompile(`(.*)(-manifest\.json\.gpg|-persistent-data\.tar\.gz|-code\.tar\.gz)`)
-
 	return versionPattern.FindStringSubmatch(item.Name())[1]
 }
-func itemsContainItemWithSuffix(items []stow.Item, suffix string) bool {
+func getItemWithSuffix(items []stow.Item, suffix string) stow.Item {
 	for _, item := range items {
 		if strings.HasSuffix(item.Name(), suffix) {
-			return true
+			return item
 		}
 	}
-
-	return false
+	return nil
 }

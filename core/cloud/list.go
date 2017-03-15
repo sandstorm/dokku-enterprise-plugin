@@ -26,7 +26,7 @@ func List() {
 func convertApplicationToTableRow(application cloudStorage.Application) (result []string) {
 	result = append(result, application.Name)
 	result = append(result, strconv.Itoa(len(application.Versions)))
-	result = append(result, application.GetLatestVersion().Identifier)
+	result = append(result, application.Versions[0].Identifier)
 
 	return
 }

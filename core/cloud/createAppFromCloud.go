@@ -11,7 +11,7 @@ import (
 	"github.com/sandstorm/dokku-enterprise-plugin/core/cloudStorage"
 )
 
-func CreateAppFromCloud(application, applicationTemplate string) {
+func CreateAppFromCloud(applicationName, applicationTemplate string) {
 	// BASICS
 	importTempDir, err := ioutil.TempDir(os.TempDir(), "storage-import")
 	if err != nil {
@@ -19,10 +19,11 @@ func CreateAppFromCloud(application, applicationTemplate string) {
 	}
 	defer os.RemoveAll(importTempDir)
 
-	log.Printf("INFO: Starting to create application %s from cloud", application)
+	log.Printf("INFO: Starting to create application %s from cloud", applicationName)
 	log.Printf("DEBUG: Temp Dir: %s", importTempDir)
 
 	fileBasename := resolveFileBasename(applicationTemplate)
+	log.Printf("INFO: Taking version %s as template", fileBasename)
 
 	// MANIFEST
 	manifestEncryptedFilename := fileBasename + "-manifest.json.gpg"
@@ -36,14 +37,14 @@ func CreateAppFromCloud(application, applicationTemplate string) {
 	manifestWrapper := manifest.DeserializeManifest(manifestAsBytes)
 
 	log.Print("INFO: Validating manifest..")
-	validationErrors := manifest.ValidateImportManifest(application, string(manifestAsBytes))
+	validationErrors := manifest.ValidateImportManifest(applicationName, string(manifestAsBytes))
 	if len(validationErrors) > 0 {
 		utility.LogCouldNotExecuteCommand(validationErrors)
 		return
 	}
 	log.Print("INFO: Manifest is valid. Starting to import..")
 
-	manifest.ImportManifest(application, string(manifestAsBytes))
+	manifest.ImportManifest(applicationName, string(manifestAsBytes))
 	log.Print("INFO: Manifest imported successfully.")
 
 	// PERSISTENT DATA
@@ -51,7 +52,7 @@ func CreateAppFromCloud(application, applicationTemplate string) {
 	persistentDataEncryptedLocalFilePath := cloudStorage.DownloadFile(persistentDataEncryptedFilename, importTempDir)
 	persistentDataLocalFilePath := utility.DecryptFile(persistentDataEncryptedLocalFilePath)
 
-	persistentData.ImportPersistentData(application, manifestWrapper, persistentDataLocalFilePath, importTempDir)
+	persistentData.ImportPersistentData(applicationName, manifestWrapper, persistentDataLocalFilePath, importTempDir)
 	log.Print("INFO: Persistent data successfully imported.")
 
 	// GIT
@@ -59,13 +60,13 @@ func CreateAppFromCloud(application, applicationTemplate string) {
 	codeEncryptedLocalFilePath := cloudStorage.DownloadFile(codeEncryptedFilename, importTempDir)
 	codeLocalFilePath := utility.DecryptFile(codeEncryptedLocalFilePath)
 
-	err = archiver.TarGz.Open(codeLocalFilePath, "/home/dokku/" + application)
+	err = archiver.TarGz.Open(codeLocalFilePath, "/home/dokku/" + applicationName)
 	if err != nil {
 		log.Fatalf("ERROR: could not extract code from tar.gz file, error was: %v", err)
 	}
 	log.Print("INFO: Code successfully imported.")
 
-	log.Printf("INFO: Successfully deployed app '%s'.", application)
+	log.Printf("INFO: Successfully deployed app '%s'.", applicationName)
 
 }
 func resolveFileBasename(applicationTemplate string) string {
@@ -75,5 +76,5 @@ func resolveFileBasename(applicationTemplate string) string {
 		utility.LogCouldNotExecuteCommand([]string{err.Error()})
 	}
 
-	return application.Versions[0].Identifier
+	return application.Versions[len(application.Versions)-1].Identifier
 }

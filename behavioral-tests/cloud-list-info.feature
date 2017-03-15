@@ -32,3 +32,10 @@ Feature: I can get information about all applications stored in the cloud
       | NAME | VERSIONS | LATEST       |
       | copy | 1        | copy__.*__.* |
       | test | 2        | test__.*__.* |
+
+  Scenario: List information about versions of an application
+    Given I call dokku "cloud:info test"
+    Then I get back a table with content:
+      | VERSION      | DATE                                | CODE SIZE \(KB\) | DATA SIZE \(KB\) |
+      | test__.*__.* | \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2} | 0\.\d{3}         | \d{1,2}\.\d{3}   |
+      | test__.*__.* | \d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2} | 0\.\d{3}         | \d{1,2}\.\d{3}   |
