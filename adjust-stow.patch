@@ -1,0 +1,21 @@
+--- vendor/github.com/graymeta/stow/local/filedata_linux.go.orig	2017-03-20 09:23:42.000000000 +0100
++++ vendor/github.com/graymeta/stow/local/filedata_linux.go	2017-03-20 09:23:57.000000000 +0100
+@@ -43,8 +43,8 @@
+ 	}
+ 
+ 	if stat := info.Sys().(*syscall.Stat_t); stat != nil {
+-		m["atime"] = time.Unix(stat.Atim.Sec, stat.Atim.Nsec).Format(time.RFC3339Nano)
+-		m["mtime"] = time.Unix(stat.Mtim.Sec, stat.Mtim.Nsec).Format(time.RFC3339Nano)
++		m["atime"] = time.Unix(int64(stat.Atim.Sec), int64(stat.Atim.Nsec)).Format(time.RFC3339Nano)
++		m["mtime"] = time.Unix(int64(stat.Mtim.Sec), int64(stat.Mtim.Nsec)).Format(time.RFC3339Nano)
+ 		m["uid"] = stat.Uid
+ 		m["gid"] = stat.Gid
+ 	}
+@@ -73,6 +73,6 @@
+ 	}
+ 	return &inodeinfo{
+ 		Ino:   statT.Ino,
+-		NLink: statT.Nlink,
++		NLink: uint64(statT.Nlink),
+ 	}, nil
+ }

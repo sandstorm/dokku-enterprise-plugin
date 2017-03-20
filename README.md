@@ -42,6 +42,7 @@ To cater different use cases, it will be possible to export/import only parts of
 go get github.com/DATA-DOG/godog/cmd/godog
 brew install glide
 glide install
+patch -p0 --dry-run < adjust-stow.patch
 ```
 
 ```
